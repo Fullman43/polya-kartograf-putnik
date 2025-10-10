@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter, Users, MapPin, LogOut, LayoutDashboard, ClipboardList, UserCircle } from "lucide-react";
+import { Plus, Filter, Users, MapPin, LogOut, LayoutDashboard, ClipboardList, UserCircle, FileText } from "lucide-react";
 import MapView from "@/components/dashboard/MapView";
 import TaskListReal from "@/components/dashboard/TaskListReal";
 import EmployeeListReal from "@/components/dashboard/EmployeeListReal";
@@ -77,6 +77,14 @@ const Dashboard = () => {
             >
               <UserCircle className="h-4 w-4" />
               Сотрудники
+            </Button>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent"
+              size="sm"
+            >
+              <FileText className="h-4 w-4" />
+              Отчеты
             </Button>
           </nav>
         </div>
