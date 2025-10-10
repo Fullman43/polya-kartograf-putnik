@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Employee {
@@ -22,6 +22,40 @@ export const useEmployees = () => {
 
       if (error) throw error;
       return data as Employee[];
+    },
+  });
+};
+
+interface CreateEmployeeData {
+  email: string;
+  full_name: string;
+  phone?: string;
+  password: string;
+  role: "employee" | "operator";
+}
+
+export const useCreateEmployee = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (employeeData: CreateEmployeeData) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Не авторизован");
+      }
+
+      const { data, error } = await supabase.functions.invoke("create-employee", {
+        body: employeeData,
+      });
+
+      if (error) throw error;
+      if (!data.success) throw new Error(data.error || "Не удалось создать сотрудника");
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
     },
   });
 };

@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter, Users, MapPin, LogOut, LayoutDashboard, ClipboardList, UserCircle, FileText } from "lucide-react";
+import { Plus, Filter, Users, MapPin, LogOut, LayoutDashboard, ClipboardList, UserCircle, FileText, UserPlus } from "lucide-react";
 import MapView from "@/components/dashboard/MapView";
 import TaskListReal from "@/components/dashboard/TaskListReal";
 import EmployeeListReal from "@/components/dashboard/EmployeeListReal";
 import { CreateTaskDialog } from "@/components/dashboard/CreateTaskDialog";
+import { CreateEmployeeDialog } from "@/components/dashboard/CreateEmployeeDialog";
 import { useAuth } from "@/hooks/useAuth";
 
 const Dashboard = () => {
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [showCreateEmployee, setShowCreateEmployee] = useState(false);
   const navigate = useNavigate();
   const { user, loading, signOut } = useAuth();
 
@@ -111,9 +113,20 @@ const Dashboard = () => {
 
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="px-4 py-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-sidebar-foreground">
-              <Users className="h-4 w-4" />
-              Сотрудники
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-sidebar-foreground">
+                <Users className="h-4 w-4" />
+                Сотрудники
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowCreateEmployee(true)}
+                title="Добавить сотрудника"
+                className="h-7 w-7"
+              >
+                <UserPlus className="h-4 w-4" />
+              </Button>
             </div>
           </div>
           <EmployeeListReal />
@@ -134,6 +147,7 @@ const Dashboard = () => {
       </main>
 
       <CreateTaskDialog open={showCreateTask} onOpenChange={setShowCreateTask} />
+      <CreateEmployeeDialog open={showCreateEmployee} onOpenChange={setShowCreateEmployee} />
     </div>
   );
 };
