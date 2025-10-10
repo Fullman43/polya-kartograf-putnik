@@ -36,6 +36,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
     date: new Date().toISOString().split("T")[0],
     time: "",
     employee: "",
+    customerName: "",
+    customerPhone: "",
+    priority: "medium",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,6 +52,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       description: formData.description || null,
       scheduled_time: scheduledDateTime,
       assigned_employee_id: formData.employee || null,
+      customer_name: formData.customerName || null,
+      customer_phone: formData.customerPhone || null,
+      priority: formData.priority as "low" | "medium" | "high" | "urgent",
       status: "pending",
     });
     
@@ -60,6 +66,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       date: new Date().toISOString().split("T")[0],
       time: "",
       employee: "",
+      customerName: "",
+      customerPhone: "",
+      priority: "medium",
     });
   };
 
@@ -70,7 +79,36 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
           <DialogTitle>Создать задачу</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="customerName">Имя заказчика</Label>
+              <Input
+                id="customerName"
+                placeholder="ООО Компания / Иванов И.И."
+                value={formData.customerName}
+                onChange={(e) =>
+                  setFormData({ ...formData, customerName: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="customerPhone">Телефон заказчика</Label>
+              <Input
+                id="customerPhone"
+                type="tel"
+                placeholder="+7 (999) 123-45-67"
+                value={formData.customerPhone}
+                onChange={(e) =>
+                  setFormData({ ...formData, customerPhone: e.target.value })
+                }
+                required
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="address">Адрес</Label>
             <Input
@@ -147,25 +185,48 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="employee">Назначить сотрудника</Label>
-            <Select
-              value={formData.employee}
-              onValueChange={(value) =>
-                setFormData({ ...formData, employee: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Не назначен" />
-              </SelectTrigger>
-              <SelectContent>
-                {employees?.map((emp) => (
-                  <SelectItem key={emp.id} value={emp.id}>
-                    {emp.full_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="priority">Приоритет</Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, priority: value })
+                }
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Низкий</SelectItem>
+                  <SelectItem value="medium">Средний</SelectItem>
+                  <SelectItem value="high">Высокий</SelectItem>
+                  <SelectItem value="urgent">Срочно</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="employee">Назначить сотрудника</Label>
+              <Select
+                value={formData.employee}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, employee: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Не назначен" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees?.map((emp) => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.full_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <DialogFooter>

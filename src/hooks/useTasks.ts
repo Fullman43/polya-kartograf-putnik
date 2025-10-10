@@ -41,11 +41,11 @@ export const useCreateTask = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       toast({
         title: "Успешно",
-        description: "Задача создана",
+        description: `Задача создана. Номер заявки: ${data.order_number}`,
       });
     },
     onError: (error) => {
