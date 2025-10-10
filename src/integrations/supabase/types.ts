@@ -131,9 +131,13 @@ export type Database = {
           completed_at: string | null
           created_at: string
           created_by: string
+          customer_name: string | null
+          customer_phone: string | null
           description: string | null
           id: string
           location: unknown | null
+          order_number: string | null
+          priority: Database["public"]["Enums"]["task_priority"]
           scheduled_time: string
           status: Database["public"]["Enums"]["task_status"]
           updated_at: string
@@ -145,9 +149,13 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by: string
+          customer_name?: string | null
+          customer_phone?: string | null
           description?: string | null
           id?: string
           location?: unknown | null
+          order_number?: string | null
+          priority?: Database["public"]["Enums"]["task_priority"]
           scheduled_time: string
           status?: Database["public"]["Enums"]["task_status"]
           updated_at?: string
@@ -159,9 +167,13 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           created_by?: string
+          customer_name?: string | null
+          customer_phone?: string | null
           description?: string | null
           id?: string
           location?: unknown | null
+          order_number?: string | null
+          priority?: Database["public"]["Enums"]["task_priority"]
           scheduled_time?: string
           status?: Database["public"]["Enums"]["task_status"]
           updated_at?: string
@@ -203,6 +215,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -214,6 +230,7 @@ export type Database = {
     Enums: {
       app_role: "operator" | "employee" | "manager"
       employee_status: "available" | "busy" | "offline"
+      task_priority: "low" | "medium" | "high" | "urgent"
       task_status:
         | "pending"
         | "assigned"
@@ -349,6 +366,7 @@ export const Constants = {
     Enums: {
       app_role: ["operator", "employee", "manager"],
       employee_status: ["available", "busy", "offline"],
+      task_priority: ["low", "medium", "high", "urgent"],
       task_status: [
         "pending",
         "assigned",
