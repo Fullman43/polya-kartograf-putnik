@@ -159,7 +159,6 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 <SelectValue placeholder="Не назначен" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Не назначен</SelectItem>
                 {employees?.map((emp) => (
                   <SelectItem key={emp.id} value={emp.id}>
                     {emp.full_name}
