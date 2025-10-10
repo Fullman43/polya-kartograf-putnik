@@ -113,19 +113,20 @@ const Dashboard = () => {
 
         <div className="flex-1 overflow-hidden flex flex-col">
           <div className="px-4 py-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-sm font-semibold text-sidebar-foreground">
                 <Users className="h-4 w-4" />
                 Сотрудники
               </div>
               <Button
-                variant="ghost"
-                size="icon"
+                variant="outline"
+                size="sm"
                 onClick={() => setShowCreateEmployee(true)}
                 title="Добавить сотрудника"
-                className="h-7 w-7"
+                className="gap-1"
               >
-                <UserPlus className="h-4 w-4" />
+                <UserPlus className="h-3.5 w-3.5" />
+                <span className="text-xs">Добавить</span>
               </Button>
             </div>
           </div>
