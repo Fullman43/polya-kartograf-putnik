@@ -1,10 +1,19 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { MapPin, Users, BarChart3, Clock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
@@ -28,20 +37,9 @@ const Index = () => {
           <div className="flex gap-4 justify-center">
             <Button 
               size="lg" 
-              onClick={() => navigate("/dashboard")}
-              className="gap-2"
+              onClick={() => navigate("/auth")}
             >
-              <Users className="h-5 w-5" />
-              Панель оператора
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              onClick={() => navigate("/employee")}
-              className="gap-2"
-            >
-              <MapPin className="h-5 w-5" />
-              Интерфейс сотрудника
+              Войти в систему
             </Button>
           </div>
         </div>

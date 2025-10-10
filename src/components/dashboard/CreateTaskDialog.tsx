@@ -17,7 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { useCreateTask } from "@/hooks/useTasks";
+import { useEmployees } from "@/hooks/useEmployees";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -25,22 +26,38 @@ interface CreateTaskDialogProps {
 }
 
 export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
+  const createTask = useCreateTask();
+  const { data: employees } = useEmployees();
+  
   const [formData, setFormData] = useState({
     address: "",
     type: "",
     description: "",
+    date: new Date().toISOString().split("T")[0],
     time: "",
     employee: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Задача создана успешно!");
+    
+    const scheduledDateTime = `${formData.date}T${formData.time}:00`;
+    
+    await createTask.mutateAsync({
+      address: formData.address,
+      work_type: formData.type,
+      description: formData.description || null,
+      scheduled_time: scheduledDateTime,
+      assigned_employee_id: formData.employee || null,
+      status: "pending",
+    });
+    
     onOpenChange(false);
     setFormData({
       address: "",
       type: "",
       description: "",
+      date: new Date().toISOString().split("T")[0],
       time: "",
       employee: "",
     });
@@ -104,6 +121,19 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
+              <Label htmlFor="date">Дата</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData({ ...formData, date: e.target.value })
+                }
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="time">Время</Label>
               <Input
                 id="time"
@@ -115,27 +145,28 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 required
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="employee">Назначить сотрудника</Label>
-              <Select
-                value={formData.employee}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, employee: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Авто-выбор" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">Ближайший свободный</SelectItem>
-                  <SelectItem value="emp1">Алексей М.</SelectItem>
-                  <SelectItem value="emp2">Дмитрий К.</SelectItem>
-                  <SelectItem value="emp3">Сергей В.</SelectItem>
-                  <SelectItem value="emp4">Иван П.</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="employee">Назначить сотрудника</Label>
+            <Select
+              value={formData.employee}
+              onValueChange={(value) =>
+                setFormData({ ...formData, employee: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Не назначен" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Не назначен</SelectItem>
+                {employees?.map((emp) => (
+                  <SelectItem key={emp.id} value={emp.id}>
+                    {emp.full_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>
@@ -146,7 +177,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             >
               Отмена
             </Button>
-            <Button type="submit">Создать задачу</Button>
+            <Button type="submit" disabled={createTask.isPending}>
+              {createTask.isPending ? "Создание..." : "Создать задачу"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

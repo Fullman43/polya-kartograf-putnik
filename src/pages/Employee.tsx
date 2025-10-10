@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,29 +9,59 @@ import {
   Clock, 
   CheckCircle2, 
   PlayCircle, 
-  Navigation,
   Camera,
-  MessageSquare
+  MessageSquare,
+  LogOut
 } from "lucide-react";
-import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useTasks, useUpdateTask } from "@/hooks/useTasks";
+import { useToast } from "@/hooks/use-toast";
 
 const Employee = () => {
-  const [status, setStatus] = useState<string>("assigned");
+  const navigate = useNavigate();
+  const { user, loading, signOut } = useAuth();
+  const { toast } = useToast();
+  const { data: tasks, isLoading: tasksLoading } = useTasks();
+  const updateTask = useUpdateTask();
+  
   const [comment, setComment] = useState("");
 
-  const handleStatusChange = (newStatus: string, label: string) => {
-    setStatus(newStatus);
-    toast.success(`Статус обновлён: ${label}`);
-  };
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
-  const mockTask = {
-    id: "1",
-    address: "ул. Ленина, д. 45, кв. 12",
-    type: "Установка оборудования",
-    description: "Установка и настройка WiFi роутера",
-    time: "14:00 - 16:00",
-    client: "Иванов Пётр Сергеевич",
-    phone: "+7 (999) 123-45-67",
+  if (loading || tasksLoading) {
+    return <div className="flex h-screen items-center justify-center">Загрузка...</div>;
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  // Get the first in_progress or assigned task for this employee
+  const currentTask = tasks?.find((task) => 
+    (task.status === "in_progress" || task.status === "assigned")
+  );
+  
+  const upcomingTasks = tasks?.filter((task) => 
+    task.status === "assigned" && task.id !== currentTask?.id
+  ).slice(0, 3);
+
+  const handleStatusChange = async (newStatus: "in_progress" | "completed", label: string) => {
+    if (!currentTask) return;
+    
+    await updateTask.mutateAsync({
+      id: currentTask.id,
+      status: newStatus,
+      ...(newStatus === "completed" ? { completed_at: new Date().toISOString() } : {}),
+    });
+    
+    toast({
+      title: "Статус обновлён",
+      description: label,
+    });
   };
 
   return (
@@ -41,156 +72,156 @@ const Employee = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold">Мои задачи</h1>
-              <p className="text-sm text-muted-foreground">Техник: Алексей М.</p>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
-            <Badge variant="outline" className="text-sm">
-              На линии
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-sm">
+                На линии
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={signOut}
+                title="Выход"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto p-4 space-y-4">
-        {/* Current Task */}
-        <Card className="p-6 shadow-card">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold mb-1">{mockTask.type}</h2>
-              <p className="text-sm text-muted-foreground">{mockTask.description}</p>
-            </div>
-            <Badge className="bg-primary">Активная</Badge>
-          </div>
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        {!currentTask ? (
+          <Card className="p-6 text-center">
+            <p className="text-muted-foreground">Нет активных задач</p>
+          </Card>
+        ) : (
+          <>
+            {/* Current Task Card */}
+            <Card className="p-6 shadow-card">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold mb-1">{currentTask.work_type}</h2>
+                  <div className="flex items-center text-muted-foreground text-sm mb-2">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    <span>{currentTask.address}</span>
+                  </div>
+                  <div className="flex items-center text-muted-foreground text-sm">
+                    <Clock className="h-4 w-4 mr-1" />
+                    <span>{new Date(currentTask.scheduled_time).toLocaleString("ru-RU")}</span>
+                  </div>
+                </div>
+                <Badge className={
+                  currentTask.status === "in_progress" ? "bg-warning" : "bg-info"
+                }>
+                  {currentTask.status === "in_progress" ? "В работе" : "Назначена"}
+                </Badge>
+              </div>
 
-          <div className="space-y-3 mb-6">
-            <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-primary mt-0.5" />
-              <div>
-                <p className="font-medium">{mockTask.address}</p>
-                <Button variant="link" className="h-auto p-0 text-primary" size="sm">
-                  <Navigation className="h-4 w-4 mr-1" />
-                  Построить маршрут
+              {currentTask.description && (
+                <div className="mb-4 p-3 bg-muted rounded-lg">
+                  <p className="text-sm">{currentTask.description}</p>
+                </div>
+              )}
+
+              {/* Status Progress */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Прогресс выполнения</span>
+                  <span className="text-sm text-muted-foreground">
+                    {currentTask.status === "assigned" && "0%"}
+                    {currentTask.status === "in_progress" && "50%"}
+                    {currentTask.status === "completed" && "100%"}
+                  </span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all duration-500 ${
+                      currentTask.status === "completed" ? "bg-success" : "bg-primary"
+                    }`}
+                    style={{ 
+                      width: currentTask.status === "assigned" ? "0%" : 
+                             currentTask.status === "in_progress" ? "50%" : "100%" 
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={currentTask.status !== "assigned"}
+                  onClick={() => handleStatusChange("in_progress", "Работа начата")}
+                >
+                  <PlayCircle className="h-4 w-4" />
+                  Начать работу
+                </Button>
+
+                <Button
+                  className="w-full gap-2"
+                  disabled={currentTask.status !== "in_progress"}
+                  onClick={() => handleStatusChange("completed", "Задача выполнена")}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Завершить
                 </Button>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm">{mockTask.time}</p>
-            </div>
+              {/* Comments and Photo */}
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    <MessageSquare className="h-4 w-4 inline mr-1" />
+                    Комментарий
+                  </label>
+                  <Textarea
+                    placeholder="Добавить примечание..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={3}
+                    className="resize-none"
+                  />
+                </div>
 
-            <div className="flex items-start gap-3">
-              <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">{mockTask.client}</p>
-                <p className="text-sm text-muted-foreground">{mockTask.phone}</p>
+                <Button variant="outline" className="w-full gap-2">
+                  <Camera className="h-4 w-4" />
+                  Добавить фото отчёт
+                </Button>
               </div>
-            </div>
-          </div>
-
-          {/* Status Progress */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Прогресс выполнения</span>
-              <span className="text-sm text-muted-foreground">
-                {status === "assigned" && "Назначено"}
-                {status === "departed" && "В пути"}
-                {status === "arrived" && "На месте"}
-                {status === "working" && "Работа"}
-                {status === "completed" && "Завершено"}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <div className={`h-2 flex-1 rounded ${status !== "assigned" ? "bg-primary" : "bg-muted"}`} />
-              <div className={`h-2 flex-1 rounded ${status !== "assigned" && status !== "departed" ? "bg-primary" : "bg-muted"}`} />
-              <div className={`h-2 flex-1 rounded ${status === "working" || status === "completed" ? "bg-primary" : "bg-muted"}`} />
-              <div className={`h-2 flex-1 rounded ${status === "completed" ? "bg-primary" : "bg-muted"}`} />
-            </div>
-          </div>
-
-          {/* Status Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <Button 
-              size="lg"
-              variant={status === "departed" ? "default" : "outline"}
-              className="gap-2"
-              onClick={() => handleStatusChange("departed", "Выехал")}
-              disabled={status !== "assigned"}
-            >
-              <Navigation className="h-5 w-5" />
-              Выехал
-            </Button>
-
-            <Button 
-              size="lg"
-              variant={status === "arrived" ? "default" : "outline"}
-              className="gap-2"
-              onClick={() => handleStatusChange("arrived", "Прибыл")}
-              disabled={status !== "departed"}
-            >
-              <MapPin className="h-5 w-5" />
-              Прибыл
-            </Button>
-
-            <Button 
-              size="lg"
-              variant={status === "working" ? "default" : "outline"}
-              className="gap-2"
-              onClick={() => handleStatusChange("working", "Начал работу")}
-              disabled={status !== "arrived"}
-            >
-              <PlayCircle className="h-5 w-5" />
-              Начал работу
-            </Button>
-
-            <Button 
-              size="lg"
-              variant={status === "completed" ? "default" : "outline"}
-              className="gap-2 bg-success hover:bg-success/90"
-              onClick={() => handleStatusChange("completed", "Завершил")}
-              disabled={status !== "working"}
-            >
-              <CheckCircle2 className="h-5 w-5" />
-              Завершил
-            </Button>
-          </div>
-
-          {/* Comment Section */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium">Комментарий</label>
-            <Textarea 
-              placeholder="Добавьте комментарий о выполненной работе..."
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-            />
-            
-            <Button variant="outline" className="w-full gap-2">
-              <Camera className="h-4 w-4" />
-              Добавить фото отчёт
-            </Button>
-          </div>
-        </Card>
+            </Card>
+          </>
+        )}
 
         {/* Upcoming Tasks */}
-        <Card className="p-6 shadow-card">
-          <h3 className="font-semibold mb-4">Предстоящие задачи (2)</h3>
-          <div className="space-y-3">
-            {[
-              { time: "16:30", address: "ул. Пушкина, д. 10", type: "Диагностика" },
-              { time: "18:00", address: "пр. Мира, д. 234", type: "Ремонт" },
-            ].map((task, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{task.type}</p>
-                  <p className="text-xs text-muted-foreground">{task.address}</p>
-                </div>
-                <Badge variant="outline">{task.time}</Badge>
-              </div>
-            ))}
+        {upcomingTasks && upcomingTasks.length > 0 && (
+          <div>
+            <h3 className="text-lg font-semibold mb-3">Предстоящие задачи</h3>
+            <div className="space-y-3">
+              {upcomingTasks.map((task) => (
+                <Card key={task.id} className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm mb-1">{task.work_type}</p>
+                      <div className="flex items-center text-muted-foreground text-xs mb-1">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>{new Date(task.scheduled_time).toLocaleString("ru-RU")}</span>
+                      </div>
+                      <div className="flex items-start text-muted-foreground text-xs">
+                        <MapPin className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
+                        <span className="line-clamp-1">{task.address}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
-        </Card>
-      </div>
+        )}
+      </main>
     </div>
   );
 };

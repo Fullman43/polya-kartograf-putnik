@@ -14,16 +14,212 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      employees: {
+        Row: {
+          created_at: string
+          current_location: unknown | null
+          current_task_id: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          status: Database["public"]["Enums"]["employee_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_location?: unknown | null
+          current_task_id?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          status?: Database["public"]["Enums"]["employee_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_location?: unknown | null
+          current_task_id?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          status?: Database["public"]["Enums"]["employee_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      routes: {
+        Row: {
+          created_at: string
+          distance: number
+          duration: number
+          employee_id: string
+          geometry: Json | null
+          id: string
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          distance: number
+          duration: number
+          employee_id: string
+          geometry?: Json | null
+          id?: string
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          distance?: number
+          duration?: number
+          employee_id?: string
+          geometry?: Json | null
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routes_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routes_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_comments: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          address: string
+          assigned_employee_id: string | null
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          location: unknown | null
+          scheduled_time: string
+          status: Database["public"]["Enums"]["task_status"]
+          updated_at: string
+          work_type: string
+        }
+        Insert: {
+          address: string
+          assigned_employee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          location?: unknown | null
+          scheduled_time: string
+          status?: Database["public"]["Enums"]["task_status"]
+          updated_at?: string
+          work_type: string
+        }
+        Update: {
+          address?: string
+          assigned_employee_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          location?: unknown | null
+          scheduled_time?: string
+          status?: Database["public"]["Enums"]["task_status"]
+          updated_at?: string
+          work_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_employee_id_fkey"
+            columns: ["assigned_employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "operator" | "employee" | "manager"
+      employee_status: "available" | "busy" | "offline"
+      task_status:
+        | "pending"
+        | "assigned"
+        | "in_progress"
+        | "completed"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +346,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["operator", "employee", "manager"],
+      employee_status: ["available", "busy", "offline"],
+      task_status: [
+        "pending",
+        "assigned",
+        "in_progress",
+        "completed",
+        "cancelled",
+      ],
+    },
   },
 } as const

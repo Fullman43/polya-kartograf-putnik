@@ -1,23 +1,53 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Plus, Filter, Users, MapPin } from "lucide-react";
+import { Plus, Filter, Users, MapPin, LogOut } from "lucide-react";
 import MapView from "@/components/dashboard/MapView";
-import TaskList from "@/components/dashboard/TaskList";
-import EmployeeList from "@/components/dashboard/EmployeeList";
+import TaskListReal from "@/components/dashboard/TaskListReal";
+import EmployeeListReal from "@/components/dashboard/EmployeeListReal";
 import { CreateTaskDialog } from "@/components/dashboard/CreateTaskDialog";
+import { useAuth } from "@/hooks/useAuth";
 
 const Dashboard = () => {
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const navigate = useNavigate();
+  const { user, loading, signOut } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center">Загрузка...</div>;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <aside className="w-80 bg-sidebar border-r border-sidebar-border flex flex-col">
         <div className="p-6 border-b border-sidebar-border">
-          <h1 className="text-2xl font-bold text-sidebar-foreground mb-1">
-            Контроль персонала
-          </h1>
-          <p className="text-sm text-sidebar-foreground/70">Панель оператора</p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-sidebar-foreground mb-1">
+                Контроль персонала
+              </h1>
+              <p className="text-sm text-sidebar-foreground/70">Панель оператора</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              title="Выход"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         <div className="p-4 space-y-2">
@@ -47,7 +77,7 @@ const Dashboard = () => {
               Сотрудники
             </div>
           </div>
-          <EmployeeList />
+          <EmployeeListReal />
 
           <div className="px-4 py-2 mt-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-sidebar-foreground">
@@ -55,7 +85,7 @@ const Dashboard = () => {
               Активные задачи
             </div>
           </div>
-          <TaskList />
+          <TaskListReal />
         </div>
       </aside>
 
