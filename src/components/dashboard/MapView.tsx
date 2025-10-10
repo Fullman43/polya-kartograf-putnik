@@ -255,18 +255,18 @@ const MapView = () => {
       </div>
 
       {/* Bottom stats */}
-      <div className="absolute bottom-4 left-4 right-4 flex gap-3 z-10">
-        <Card className="p-4 shadow-lg flex-1 bg-background/95 backdrop-blur">
-          <div className="text-2xl font-bold text-primary">8</div>
-          <div className="text-sm text-muted-foreground">Сотрудников на линии</div>
+      <div className="absolute bottom-4 right-4 flex gap-2 z-10 max-w-md">
+        <Card className="p-3 shadow-lg bg-background/95 backdrop-blur">
+          <div className="text-xl font-bold text-primary">8</div>
+          <div className="text-xs text-muted-foreground">Сотрудников</div>
         </Card>
-        <Card className="p-4 shadow-lg flex-1 bg-background/95 backdrop-blur">
-          <div className="text-2xl font-bold text-warning">12</div>
-          <div className="text-sm text-muted-foreground">Активных задач</div>
+        <Card className="p-3 shadow-lg bg-background/95 backdrop-blur">
+          <div className="text-xl font-bold text-warning">12</div>
+          <div className="text-xs text-muted-foreground">Активных</div>
         </Card>
-        <Card className="p-4 shadow-lg flex-1 bg-background/95 backdrop-blur">
-          <div className="text-2xl font-bold text-success">24</div>
-          <div className="text-sm text-muted-foreground">Завершено сегодня</div>
+        <Card className="p-3 shadow-lg bg-background/95 backdrop-blur">
+          <div className="text-xl font-bold text-success">24</div>
+          <div className="text-xs text-muted-foreground">Завершено</div>
         </Card>
       </div>
     </div>
