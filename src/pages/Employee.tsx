@@ -366,6 +366,12 @@ const Employee = () => {
                     <Clock className="h-4 w-4 mr-1" />
                     <span>{new Date(currentTask.scheduled_time).toLocaleString("ru-RU")}</span>
                   </div>
+                  {currentTask.customer_name && (
+                    <div className="flex items-center text-muted-foreground text-sm mb-1">
+                      <span className="mr-1">👤</span>
+                      <span>{currentTask.customer_name}</span>
+                    </div>
+                  )}
                   {currentTask.customer_phone && (
                     <div className="flex items-center text-muted-foreground text-sm">
                       <span className="mr-1">📞</span>
@@ -545,6 +551,12 @@ const Employee = () => {
                         <MapPin className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
                         <span className="line-clamp-1">{task.address}</span>
                       </div>
+                      {task.customer_name && (
+                        <div className="flex items-center text-muted-foreground text-xs mb-1">
+                          <span className="mr-1">👤</span>
+                          <span>{task.customer_name}</span>
+                        </div>
+                      )}
                       {task.customer_phone && (
                         <div className="flex items-center text-muted-foreground text-xs">
                           <span className="mr-1">📞</span>
