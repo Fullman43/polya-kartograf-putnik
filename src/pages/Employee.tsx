@@ -24,6 +24,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTasks, useUpdateTask } from "@/hooks/useTasks";
 import { useGetCurrentEmployee, useUpdateEmployeeStatus } from "@/hooks/useEmployees";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -33,6 +35,7 @@ const Employee = () => {
   const { data: currentEmployee, isLoading: employeeLoading } = useGetCurrentEmployee();
   const updateTask = useUpdateTask();
   const updateEmployeeStatus = useUpdateEmployeeStatus();
+  const queryClient = useQueryClient();
   
   const [comment, setComment] = useState("");
   const [watchId, setWatchId] = useState<number | null>(null);
@@ -44,6 +47,33 @@ const Employee = () => {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
+
+  // Setup realtime subscriptions for tasks and employees
+  useEffect(() => {
+    const channel = supabase
+      .channel('employee-page-updates')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'tasks' 
+      }, () => {
+        console.log('Task data changed - refreshing');
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'employees' 
+      }, () => {
+        console.log('Employee data changed - refreshing');
+        queryClient.invalidateQueries({ queryKey: ['employees'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Track employee location when available or busy
   useEffect(() => {
@@ -131,12 +161,17 @@ const Employee = () => {
     return null;
   }
 
+  // Filter tasks assigned to this employee only
+  const myTasks = tasks?.filter((task) => 
+    task.assigned_employee_id === currentEmployee?.id
+  );
+
   // Get the first in_progress, en_route or assigned task for this employee
-  const currentTask = tasks?.find((task) => 
+  const currentTask = myTasks?.find((task) => 
     (task.status === "in_progress" || task.status === "en_route" || task.status === "assigned")
   );
   
-  const upcomingTasks = tasks?.filter((task) => 
+  const upcomingTasks = myTasks?.filter((task) => 
     task.status === "assigned" && task.id !== currentTask?.id
   ).slice(0, 3);
 
