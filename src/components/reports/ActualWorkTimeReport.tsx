@@ -75,10 +75,27 @@ export function ActualWorkTimeReport() {
       const taskDetails: TaskDetails[] = dayTasks.map(task => {
         const scheduled = new Date(task.scheduled_time);
         const completed = new Date(task.completed_at!);
-        const totalMinutes = Math.round((completed.getTime() - scheduled.getTime()) / (1000 * 60));
         
-        const travelTime = Math.round(totalMinutes * 0.3);
-        const workTime = totalMinutes - travelTime;
+        // Calculate actual times from timestamps if available
+        let travelTime = 0;
+        let workTime = 0;
+        
+        if (task.en_route_at && task.started_at) {
+          // Real travel time: from en_route to started
+          travelTime = Math.round((new Date(task.started_at).getTime() - new Date(task.en_route_at).getTime()) / (1000 * 60));
+        }
+        
+        if (task.started_at && task.completed_at) {
+          // Real work time: from started to completed
+          workTime = Math.round((new Date(task.completed_at).getTime() - new Date(task.started_at).getTime()) / (1000 * 60));
+        }
+        
+        // Fallback to approximate calculation if real data is missing
+        if (!task.en_route_at || !task.started_at) {
+          const totalMinutes = Math.round((completed.getTime() - scheduled.getTime()) / (1000 * 60));
+          travelTime = Math.round(totalMinutes * 0.3);
+          workTime = totalMinutes - travelTime;
+        }
 
         return {
           id: task.id,
@@ -359,36 +376,49 @@ export function ActualWorkTimeReport() {
                       {expandedRows.has(day.date) && (
                         <TableRow>
                           <TableCell colSpan={7} className="bg-muted/30 p-4">
-                            <div className="space-y-2">
+                              <div className="space-y-2">
                               <h4 className="font-semibold mb-3">Детализация заявок:</h4>
-                              {day.tasks.map(task => (
-                                <div key={task.id} className="grid grid-cols-5 gap-4 p-3 bg-background rounded-lg border text-sm">
-                                  <div>
-                                    <span className="text-muted-foreground">Заявка:</span>
-                                    <p className="font-medium">{task.orderNumber}</p>
+                              {day.tasks.map(task => {
+                                const taskData = tasks?.find(t => t.id === task.id);
+                                const hasRealData = taskData?.en_route_at && taskData?.started_at;
+                                
+                                return (
+                                  <div key={task.id} className="p-3 bg-background rounded-lg border">
+                                    {!hasRealData && (
+                                      <div className="mb-2 text-xs text-warning flex items-center gap-1">
+                                        <span>⚠️</span>
+                                        <span>Примерный расчёт (нет данных о времени в пути)</span>
+                                      </div>
+                                    )}
+                                    <div className="grid grid-cols-5 gap-4 text-sm">
+                                      <div>
+                                        <span className="text-muted-foreground">Заявка:</span>
+                                        <p className="font-medium">{task.orderNumber}</p>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Адрес:</span>
+                                        <p className="font-medium">{task.address}</p>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Начало:</span>
+                                        <p className="font-medium">
+                                          {format(task.scheduledTime, "HH:mm", { locale: ru })}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Завершение:</span>
+                                        <p className="font-medium">
+                                          {format(task.completedTime, "HH:mm", { locale: ru })}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <span className="text-muted-foreground">Время работы:</span>
+                                        <p className="font-medium">{formatMinutes(task.workTime)}</p>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Адрес:</span>
-                                    <p className="font-medium">{task.address}</p>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Начало:</span>
-                                    <p className="font-medium">
-                                      {format(task.scheduledTime, "HH:mm", { locale: ru })}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Завершение:</span>
-                                    <p className="font-medium">
-                                      {format(task.completedTime, "HH:mm", { locale: ru })}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <span className="text-muted-foreground">Время работы:</span>
-                                    <p className="font-medium">{formatMinutes(task.workTime)}</p>
-                                  </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </TableCell>
                         </TableRow>

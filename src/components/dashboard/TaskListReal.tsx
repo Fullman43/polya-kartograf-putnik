@@ -22,6 +22,12 @@ const TaskListReal = () => {
             Назначена
           </Badge>
         );
+      case "en_route":
+        return (
+          <Badge className="bg-primary text-xs">
+            В пути
+          </Badge>
+        );
       case "in_progress":
         return (
           <Badge className="bg-warning text-xs">

@@ -44,6 +44,8 @@ const Tasks = () => {
         return <Badge variant="secondary">Ожидает</Badge>;
       case "assigned":
         return <Badge className="bg-blue-500">Назначена</Badge>;
+      case "en_route":
+        return <Badge className="bg-primary">В пути</Badge>;
       case "in_progress":
         return <Badge className="bg-warning">В процессе</Badge>;
       case "completed":
@@ -103,6 +105,7 @@ const Tasks = () => {
               <SelectItem value="all">Все задачи</SelectItem>
               <SelectItem value="pending">Ожидает</SelectItem>
               <SelectItem value="assigned">Назначена</SelectItem>
+              <SelectItem value="en_route">В пути</SelectItem>
               <SelectItem value="in_progress">В процессе</SelectItem>
               <SelectItem value="completed">Выполнена</SelectItem>
               <SelectItem value="cancelled">Отменена</SelectItem>

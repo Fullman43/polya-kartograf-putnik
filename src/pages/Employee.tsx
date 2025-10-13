@@ -36,6 +36,8 @@ const Employee = () => {
   
   const [comment, setComment] = useState("");
   const [watchId, setWatchId] = useState<number | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<"active" | "unavailable" | "loading">("loading");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -57,6 +59,9 @@ const Employee = () => {
         async (position) => {
           const { latitude, longitude } = position.coords;
           const location = `POINT(${longitude} ${latitude})`;
+          
+          setCurrentLocation({ latitude, longitude });
+          setGpsStatus("active");
 
           // Update employee location in database
           try {
@@ -71,6 +76,7 @@ const Employee = () => {
         },
         (error) => {
           console.error("Geolocation error:", error);
+          setGpsStatus("unavailable");
           toast({
             title: "Ошибка геолокации",
             description: "Не удалось получить ваше местоположение",
@@ -125,23 +131,50 @@ const Employee = () => {
     return null;
   }
 
-  // Get the first in_progress or assigned task for this employee
+  // Get the first in_progress, en_route or assigned task for this employee
   const currentTask = tasks?.find((task) => 
-    (task.status === "in_progress" || task.status === "assigned")
+    (task.status === "in_progress" || task.status === "en_route" || task.status === "assigned")
   );
   
   const upcomingTasks = tasks?.filter((task) => 
     task.status === "assigned" && task.id !== currentTask?.id
   ).slice(0, 3);
 
-  const handleStatusChange = async (newStatus: "in_progress" | "completed", label: string) => {
-    if (!currentTask || !currentEmployee) return;
+  const handleEnRoute = async () => {
+    if (!currentTask || !currentEmployee || !currentLocation) return;
     
     await updateTask.mutateAsync({
       id: currentTask.id,
-      status: newStatus,
-      ...(newStatus === "completed" ? { completed_at: new Date().toISOString() } : {}),
+      status: "en_route",
+      en_route_at: new Date().toISOString(),
     });
+
+    await updateEmployeeStatus.mutateAsync({
+      employeeId: currentEmployee.id,
+      status: "busy"
+    });
+    
+    toast({
+      title: "Статус обновлён",
+      description: "Вы в пути к заявке",
+    });
+  };
+
+  const handleStatusChange = async (newStatus: "in_progress" | "completed", label: string) => {
+    if (!currentTask || !currentEmployee) return;
+    
+    const updates: any = {
+      id: currentTask.id,
+      status: newStatus,
+    };
+    
+    if (newStatus === "in_progress") {
+      updates.started_at = new Date().toISOString();
+    } else if (newStatus === "completed") {
+      updates.completed_at = new Date().toISOString();
+    }
+    
+    await updateTask.mutateAsync(updates);
 
     // Update employee status based on task status
     if (newStatus === "in_progress") {
@@ -152,7 +185,7 @@ const Employee = () => {
     } else if (newStatus === "completed") {
       // Check if there are other active tasks
       const hasOtherActiveTasks = tasks?.some(
-        t => t.id !== currentTask.id && (t.status === "in_progress" || t.status === "assigned")
+        t => t.id !== currentTask.id && (t.status === "in_progress" || t.status === "en_route" || t.status === "assigned")
       );
       
       await updateEmployeeStatus.mutateAsync({
@@ -207,7 +240,29 @@ const Employee = () => {
               <h1 className="text-xl font-bold">Мои задачи</h1>
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              {/* GPS Status */}
+              <div className="flex items-center gap-2 text-xs">
+                {gpsStatus === "active" && (
+                  <>
+                    <span className="h-2 w-2 bg-success rounded-full animate-pulse" />
+                    <span className="text-muted-foreground">GPS активен</span>
+                  </>
+                )}
+                {gpsStatus === "unavailable" && (
+                  <>
+                    <span className="h-2 w-2 bg-destructive rounded-full" />
+                    <span className="text-muted-foreground">GPS недоступен</span>
+                  </>
+                )}
+                {gpsStatus === "loading" && (
+                  <>
+                    <span className="h-2 w-2 bg-warning rounded-full animate-pulse" />
+                    <span className="text-muted-foreground">Определение...</span>
+                  </>
+                )}
+              </div>
+              
               {currentEmployee && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -269,9 +324,11 @@ const Employee = () => {
                   </div>
                 </div>
                 <Badge className={
-                  currentTask.status === "in_progress" ? "bg-warning" : "bg-info"
+                  currentTask.status === "in_progress" ? "bg-warning" : 
+                  currentTask.status === "en_route" ? "bg-info" : "bg-secondary"
                 }>
-                  {currentTask.status === "in_progress" ? "В работе" : "Назначена"}
+                  {currentTask.status === "in_progress" ? "В работе" : 
+                   currentTask.status === "en_route" ? "В пути" : "Назначена"}
                 </Badge>
               </div>
 
@@ -281,13 +338,36 @@ const Employee = () => {
                 </div>
               )}
 
+              {/* Current Location */}
+              {currentLocation && (
+                <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-4 w-4 text-primary mt-0.5" />
+                    <div className="flex-1 text-sm">
+                      <p className="font-medium mb-1">📍 Ваше местоположение</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                        <div>
+                          <span>Широта: </span>
+                          <span className="font-mono">{currentLocation.latitude.toFixed(6)}</span>
+                        </div>
+                        <div>
+                          <span>Долгота: </span>
+                          <span className="font-mono">{currentLocation.longitude.toFixed(6)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Status Progress */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Прогресс выполнения</span>
                   <span className="text-sm text-muted-foreground">
                     {currentTask.status === "assigned" && "0%"}
-                    {currentTask.status === "in_progress" && "50%"}
+                    {currentTask.status === "en_route" && "33%"}
+                    {currentTask.status === "in_progress" && "66%"}
                     {currentTask.status === "completed" && "100%"}
                   </span>
                 </div>
@@ -298,32 +378,68 @@ const Employee = () => {
                     }`}
                     style={{ 
                       width: currentTask.status === "assigned" ? "0%" : 
-                             currentTask.status === "in_progress" ? "50%" : "100%" 
+                             currentTask.status === "en_route" ? "33%" :
+                             currentTask.status === "in_progress" ? "66%" : "100%" 
                     }}
                   />
+                </div>
+                
+                {/* Visual Steps */}
+                <div className="flex items-center justify-between mt-3 text-xs">
+                  <div className={`flex items-center gap-1 ${currentTask.status === "assigned" ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                    <div className={`h-2 w-2 rounded-full ${currentTask.status === "assigned" ? "bg-primary" : "bg-muted-foreground"}`} />
+                    Назначена
+                  </div>
+                  <div className={`flex items-center gap-1 ${currentTask.status === "en_route" ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                    <div className={`h-2 w-2 rounded-full ${currentTask.status === "en_route" ? "bg-primary" : "bg-muted-foreground"}`} />
+                    В пути
+                  </div>
+                  <div className={`flex items-center gap-1 ${currentTask.status === "in_progress" ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                    <div className={`h-2 w-2 rounded-full ${currentTask.status === "in_progress" ? "bg-primary" : "bg-muted-foreground"}`} />
+                    На месте
+                  </div>
+                  <div className={`flex items-center gap-1 ${currentTask.status === "completed" ? "text-success font-medium" : "text-muted-foreground"}`}>
+                    <div className={`h-2 w-2 rounded-full ${currentTask.status === "completed" ? "bg-success" : "bg-muted-foreground"}`} />
+                    Завершена
+                  </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  disabled={currentTask.status !== "assigned"}
-                  onClick={() => handleStatusChange("in_progress", "Работа начата")}
-                >
-                  <PlayCircle className="h-4 w-4" />
-                  Начать работу
-                </Button>
+              <div className="space-y-3 mb-4">
+                {/* En Route Button */}
+                {currentTask.status === "assigned" && (
+                  <Button
+                    variant="default"
+                    className="w-full gap-2"
+                    disabled={!currentLocation}
+                    onClick={handleEnRoute}
+                  >
+                    <MapPin className="h-4 w-4" />
+                    В пути на заявку
+                  </Button>
+                )}
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    disabled={currentTask.status !== "en_route"}
+                    onClick={() => handleStatusChange("in_progress", "Работа начата")}
+                  >
+                    <PlayCircle className="h-4 w-4" />
+                    Начать работу
+                  </Button>
 
-                <Button
-                  className="w-full gap-2"
-                  disabled={currentTask.status !== "in_progress"}
-                  onClick={() => handleStatusChange("completed", "Задача выполнена")}
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Завершить
-                </Button>
+                  <Button
+                    className="w-full gap-2"
+                    disabled={currentTask.status !== "in_progress"}
+                    onClick={() => handleStatusChange("completed", "Задача выполнена")}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Завершить
+                  </Button>
+                </div>
               </div>
 
               {/* Comments and Photo */}
