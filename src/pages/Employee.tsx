@@ -170,10 +170,19 @@ const Employee = () => {
   const currentTask = myTasks?.find((task) => 
     (task.status === "in_progress" || task.status === "en_route" || task.status === "assigned")
   );
-  
-  const upcomingTasks = myTasks?.filter((task) => 
-    task.status === "assigned" && task.id !== currentTask?.id
-  ).slice(0, 3);
+
+  // Translation function for work types
+  const translateWorkType = (workType: string): string => {
+    const translations: Record<string, string> = {
+      'repair': 'Ремонт',
+      'diagnostics': 'Диагностика',
+      'installation': 'Установка',
+      'maintenance': 'Обслуживание',
+      'consultation': 'Консультация',
+      'inspection': 'Осмотр'
+    };
+    return translations[workType.toLowerCase()] || workType;
+  };
 
   const handleEnRoute = async () => {
     if (!currentTask || !currentEmployee || !currentLocation) return;
@@ -347,16 +356,24 @@ const Employee = () => {
             {/* Current Task Card */}
             <Card className="p-6 shadow-card">
               <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-lg font-semibold mb-1">{currentTask.work_type}</h2>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold mb-1">{translateWorkType(currentTask.work_type)}</h2>
                   <div className="flex items-center text-muted-foreground text-sm mb-2">
                     <MapPin className="h-4 w-4 mr-1" />
                     <span>{currentTask.address}</span>
                   </div>
-                  <div className="flex items-center text-muted-foreground text-sm">
+                  <div className="flex items-center text-muted-foreground text-sm mb-2">
                     <Clock className="h-4 w-4 mr-1" />
                     <span>{new Date(currentTask.scheduled_time).toLocaleString("ru-RU")}</span>
                   </div>
+                  {currentTask.customer_phone && (
+                    <div className="flex items-center text-muted-foreground text-sm">
+                      <span className="mr-1">📞</span>
+                      <a href={`tel:${currentTask.customer_phone}`} className="hover:text-primary hover:underline">
+                        {currentTask.customer_phone}
+                      </a>
+                    </div>
+                  )}
                 </div>
                 <Badge className={
                   currentTask.status === "in_progress" ? "bg-warning" : 
@@ -502,24 +519,40 @@ const Employee = () => {
           </>
         )}
 
-        {/* Upcoming Tasks */}
-        {upcomingTasks && upcomingTasks.length > 0 && (
+        {/* All My Tasks */}
+        {myTasks && myTasks.length > 1 && (
           <div>
-            <h3 className="text-lg font-semibold mb-3">Предстоящие задачи</h3>
+            <h3 className="text-lg font-semibold mb-3">Все мои заявки</h3>
             <div className="space-y-3">
-              {upcomingTasks.map((task) => (
-                <Card key={task.id} className="p-4">
+              {myTasks.filter(task => task.id !== currentTask?.id).map((task) => (
+                <Card key={task.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="font-medium text-sm mb-1">{task.work_type}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium text-sm">{translateWorkType(task.work_type)}</p>
+                        <Badge variant="outline" className="text-xs">
+                          {task.status === "assigned" ? "Назначена" : 
+                           task.status === "en_route" ? "В пути" : 
+                           task.status === "in_progress" ? "В работе" : 
+                           task.status === "completed" ? "Завершена" : task.status}
+                        </Badge>
+                      </div>
                       <div className="flex items-center text-muted-foreground text-xs mb-1">
                         <Clock className="h-3 w-3 mr-1" />
                         <span>{new Date(task.scheduled_time).toLocaleString("ru-RU")}</span>
                       </div>
-                      <div className="flex items-start text-muted-foreground text-xs">
+                      <div className="flex items-start text-muted-foreground text-xs mb-1">
                         <MapPin className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
                         <span className="line-clamp-1">{task.address}</span>
                       </div>
+                      {task.customer_phone && (
+                        <div className="flex items-center text-muted-foreground text-xs">
+                          <span className="mr-1">📞</span>
+                          <a href={`tel:${task.customer_phone}`} className="hover:text-primary hover:underline">
+                            {task.customer_phone}
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>
