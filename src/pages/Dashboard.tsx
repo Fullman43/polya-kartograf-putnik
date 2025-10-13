@@ -52,9 +52,10 @@ const Dashboard = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="ghost"
+                  variant="default"
                   size="icon"
                   title="Профиль"
+                  className="bg-primary hover:bg-primary/90"
                 >
                   <UserCircle className="h-5 w-5" />
                 </Button>
