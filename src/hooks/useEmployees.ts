@@ -86,10 +86,23 @@ export const useUpdateEmployeeStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ employeeId, status }: { employeeId: string; status: "available" | "busy" | "offline" }) => {
+    mutationFn: async ({ 
+      employeeId, 
+      status, 
+      location 
+    }: { 
+      employeeId: string; 
+      status: "available" | "busy" | "offline";
+      location?: string;
+    }) => {
+      const updateData: any = { status };
+      if (location) {
+        updateData.current_location = location;
+      }
+
       const { error } = await supabase
         .from("employees")
-        .update({ status })
+        .update(updateData)
         .eq("id", employeeId);
 
       if (error) throw error;

@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { useCreateTask } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
+import { geocodeAddress, formatToPostGISPoint } from "@/lib/routing";
+import { useToast } from "@/hooks/use-toast";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -28,6 +30,7 @@ interface CreateTaskDialogProps {
 export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
   const createTask = useCreateTask();
   const { data: employees } = useEmployees();
+  const { toast } = useToast();
   
   const [formData, setFormData] = useState({
     address: "",
@@ -40,36 +43,64 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
     customerPhone: "",
     priority: "medium",
   });
+  const [isGeocoding, setIsGeocoding] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const scheduledDateTime = `${formData.date}T${formData.time}:00`;
+    setIsGeocoding(true);
     
-    await createTask.mutateAsync({
-      address: formData.address,
-      work_type: formData.type,
-      description: formData.description || null,
-      scheduled_time: scheduledDateTime,
-      assigned_employee_id: formData.employee || null,
-      customer_name: formData.customerName || null,
-      customer_phone: formData.customerPhone || null,
-      priority: formData.priority as "low" | "medium" | "high" | "urgent",
-      status: "pending",
-    });
-    
-    onOpenChange(false);
-    setFormData({
-      address: "",
-      type: "",
-      description: "",
-      date: new Date().toISOString().split("T")[0],
-      time: "",
-      employee: "",
-      customerName: "",
-      customerPhone: "",
-      priority: "medium",
-    });
+    try {
+      // Geocode the address
+      const coordinates = await geocodeAddress(formData.address);
+      
+      if (!coordinates) {
+        toast({
+          title: "Ошибка геокодирования",
+          description: "Не удалось найти координаты для указанного адреса",
+          variant: "destructive",
+        });
+        setIsGeocoding(false);
+        return;
+      }
+
+      const scheduledDateTime = `${formData.date}T${formData.time}:00`;
+      
+      await createTask.mutateAsync({
+        address: formData.address,
+        location: formatToPostGISPoint(coordinates.lat, coordinates.lng) as any,
+        work_type: formData.type,
+        description: formData.description || null,
+        scheduled_time: scheduledDateTime,
+        assigned_employee_id: formData.employee || null,
+        customer_name: formData.customerName || null,
+        customer_phone: formData.customerPhone || null,
+        priority: formData.priority as "low" | "medium" | "high" | "urgent",
+        status: "pending",
+      });
+      
+      onOpenChange(false);
+      setFormData({
+        address: "",
+        type: "",
+        description: "",
+        date: new Date().toISOString().split("T")[0],
+        time: "",
+        employee: "",
+        customerName: "",
+        customerPhone: "",
+        priority: "medium",
+      });
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать задачу",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeocoding(false);
+    }
   };
 
   return (
@@ -237,8 +268,8 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             >
               Отмена
             </Button>
-            <Button type="submit" disabled={createTask.isPending}>
-              {createTask.isPending ? "Создание..." : "Создать задачу"}
+            <Button type="submit" disabled={createTask.isPending || isGeocoding}>
+              {createTask.isPending || isGeocoding ? "Создание..." : "Создать задачу"}
             </Button>
           </DialogFooter>
         </form>

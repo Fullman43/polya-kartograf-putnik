@@ -35,12 +35,70 @@ const Employee = () => {
   const updateEmployeeStatus = useUpdateEmployeeStatus();
   
   const [comment, setComment] = useState("");
+  const [watchId, setWatchId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
+
+  // Track employee location when available or busy
+  useEffect(() => {
+    if (!currentEmployee?.id) return;
+
+    const startLocationTracking = () => {
+      if (!navigator.geolocation) {
+        console.error("Geolocation is not supported");
+        return;
+      }
+
+      const id = navigator.geolocation.watchPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          const location = `POINT(${longitude} ${latitude})`;
+
+          // Update employee location in database
+          try {
+            await updateEmployeeStatus.mutateAsync({
+              employeeId: currentEmployee.id,
+              status: currentEmployee.status,
+              location: location as any,
+            });
+          } catch (error) {
+            console.error("Failed to update location:", error);
+          }
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          toast({
+            title: "Ошибка геолокации",
+            description: "Не удалось получить ваше местоположение",
+            variant: "destructive",
+          });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000,
+        }
+      );
+
+      setWatchId(id);
+    };
+
+    // Only track location when employee is available or busy
+    if (currentEmployee.status === "available" || currentEmployee.status === "busy") {
+      startLocationTracking();
+    }
+
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        setWatchId(null);
+      }
+    };
+  }, [currentEmployee?.id, currentEmployee?.status]);
 
   // Automatically set status to available on mount, offline on unmount
   useEffect(() => {
