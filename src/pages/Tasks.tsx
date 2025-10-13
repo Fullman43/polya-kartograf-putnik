@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MapPin, Clock, User, Phone } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Tasks = () => {
   const navigate = useNavigate();
@@ -23,12 +25,40 @@ const Tasks = () => {
   const { data: employees } = useEmployees();
   const updateTask = useUpdateTask();
   const [filter, setFilter] = useState<string>("all");
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
+
+  // Setup realtime subscriptions for tasks and employees
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-page-updates')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'tasks' 
+      }, () => {
+        console.log('Task data changed - refreshing');
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'employees' 
+      }, () => {
+        console.log('Employee data changed - refreshing');
+        queryClient.invalidateQueries({ queryKey: ['employees'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Загрузка...</div>;
