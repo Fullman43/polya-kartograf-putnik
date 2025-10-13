@@ -8,6 +8,8 @@ import { useTasks } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { ActualWorkTimeReport } from "@/components/reports/ActualWorkTimeReport";
+import { TaskDetailsReport } from "@/components/reports/TaskDetailsReport";
+import { CalendarReport } from "@/components/reports/CalendarReport";
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -88,6 +90,8 @@ const Reports = () => {
           <TabsList>
             <TabsTrigger value="overview">Общая статистика</TabsTrigger>
             <TabsTrigger value="worktime">Фактическое время работы</TabsTrigger>
+            <TabsTrigger value="taskdetails">Детализация по заявкам</TabsTrigger>
+            <TabsTrigger value="calendar">Календарь</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -212,6 +216,14 @@ const Reports = () => {
 
           <TabsContent value="worktime">
             <ActualWorkTimeReport />
+          </TabsContent>
+
+          <TabsContent value="taskdetails">
+            <TaskDetailsReport />
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <CalendarReport />
           </TabsContent>
         </Tabs>
       </div>
