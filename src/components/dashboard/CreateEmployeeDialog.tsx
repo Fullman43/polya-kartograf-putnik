@@ -45,7 +45,7 @@ const employeeSchema = z.object({
     .string()
     .min(6, { message: "Пароль должен содержать минимум 6 символов" })
     .max(72, { message: "Пароль должен быть меньше 72 символов" }),
-  role: z.enum(["employee", "operator"], {
+  role: z.enum(["employee", "operator", "manager", "client"], {
     required_error: "Выберите роль",
   }),
 });
@@ -187,8 +187,38 @@ export function CreateEmployeeDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="employee">Сотрудник</SelectItem>
-                      <SelectItem value="operator">Оператор</SelectItem>
+                      <SelectItem value="employee">
+                        <div className="flex flex-col py-1">
+                          <span className="font-medium">Сотрудник (Техник)</span>
+                          <span className="text-xs text-muted-foreground">
+                            Чек-листы, фотоотчёты, QR-сканирование, подзадачи
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="operator">
+                        <div className="flex flex-col py-1">
+                          <span className="font-medium">Оператор / Диспетчер</span>
+                          <span className="text-xs text-muted-foreground">
+                            Управление задачами, оборудованием, KPI дашборды
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="manager">
+                        <div className="flex flex-col py-1">
+                          <span className="font-medium">Руководитель / Аналитик</span>
+                          <span className="text-xs text-muted-foreground">
+                            Аналитика, отчёты, управление регионами
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="client">
+                        <div className="flex flex-col py-1">
+                          <span className="font-medium">Клиент</span>
+                          <span className="text-xs text-muted-foreground">
+                            Доступ к статусам заявок и истории работ
+                          </span>
+                        </div>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

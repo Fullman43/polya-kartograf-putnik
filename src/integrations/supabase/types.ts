@@ -47,6 +47,30 @@ export type Database = {
         }
         Relationships: []
       }
+      role_descriptions: {
+        Row: {
+          created_at: string | null
+          description: string
+          permissions: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          permissions?: Json | null
+          role: Database["public"]["Enums"]["app_role"]
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          permissions?: Json | null
+          role?: Database["public"]["Enums"]["app_role"]
+          title?: string
+        }
+        Relationships: []
+      }
       routes: {
         Row: {
           created_at: string
