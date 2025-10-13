@@ -63,7 +63,7 @@ const EmployeeListReal = () => {
               key={employee.id}
               className="p-3 bg-card rounded-lg cursor-pointer hover:bg-accent transition-colors border border-border"
             >
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-4 w-4 text-primary" />
@@ -74,19 +74,6 @@ const EmployeeListReal = () => {
                 </div>
                 {getStatusBadge(employee.status)}
               </div>
-
-              {currentTask && (
-                <div className="ml-10 space-y-1">
-                  <div className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
-                    <span className="line-clamp-1">{currentTask.address}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>{new Date(currentTask.scheduled_time).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</span>
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}
