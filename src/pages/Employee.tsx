@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   MapPin, 
   Clock, 
@@ -11,10 +17,12 @@ import {
   PlayCircle, 
   Camera,
   MessageSquare,
-  LogOut
+  LogOut,
+  ChevronDown
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks, useUpdateTask } from "@/hooks/useTasks";
+import { useGetCurrentEmployee, useUpdateEmployeeStatus } from "@/hooks/useEmployees";
 import { useToast } from "@/hooks/use-toast";
 
 const Employee = () => {
@@ -22,7 +30,9 @@ const Employee = () => {
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
   const { data: tasks, isLoading: tasksLoading } = useTasks();
+  const { data: currentEmployee, isLoading: employeeLoading } = useGetCurrentEmployee();
   const updateTask = useUpdateTask();
+  const updateEmployeeStatus = useUpdateEmployeeStatus();
   
   const [comment, setComment] = useState("");
 
@@ -32,7 +42,24 @@ const Employee = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading || tasksLoading) {
+  // Automatically set status to available on mount, offline on unmount
+  useEffect(() => {
+    if (currentEmployee?.id) {
+      updateEmployeeStatus.mutate({ 
+        employeeId: currentEmployee.id, 
+        status: "available" 
+      });
+
+      return () => {
+        updateEmployeeStatus.mutate({ 
+          employeeId: currentEmployee.id, 
+          status: "offline" 
+        });
+      };
+    }
+  }, [currentEmployee?.id]);
+
+  if (loading || tasksLoading || employeeLoading) {
     return <div className="flex h-screen items-center justify-center">Загрузка...</div>;
   }
 
@@ -50,18 +77,66 @@ const Employee = () => {
   ).slice(0, 3);
 
   const handleStatusChange = async (newStatus: "in_progress" | "completed", label: string) => {
-    if (!currentTask) return;
+    if (!currentTask || !currentEmployee) return;
     
     await updateTask.mutateAsync({
       id: currentTask.id,
       status: newStatus,
       ...(newStatus === "completed" ? { completed_at: new Date().toISOString() } : {}),
     });
+
+    // Update employee status based on task status
+    if (newStatus === "in_progress") {
+      await updateEmployeeStatus.mutateAsync({
+        employeeId: currentEmployee.id,
+        status: "busy"
+      });
+    } else if (newStatus === "completed") {
+      // Check if there are other active tasks
+      const hasOtherActiveTasks = tasks?.some(
+        t => t.id !== currentTask.id && (t.status === "in_progress" || t.status === "assigned")
+      );
+      
+      await updateEmployeeStatus.mutateAsync({
+        employeeId: currentEmployee.id,
+        status: hasOtherActiveTasks ? "busy" : "available"
+      });
+    }
     
     toast({
       title: "Статус обновлён",
       description: label,
     });
+  };
+
+  const handleEmployeeStatusChange = async (status: "available" | "busy" | "offline") => {
+    if (!currentEmployee) return;
+
+    await updateEmployeeStatus.mutateAsync({
+      employeeId: currentEmployee.id,
+      status
+    });
+
+    const statusLabels = {
+      available: "Доступен",
+      busy: "Занят",
+      offline: "Оффлайн"
+    };
+
+    toast({
+      title: "Статус изменён",
+      description: statusLabels[status],
+    });
+  };
+
+  const getStatusBadge = (status: "available" | "busy" | "offline") => {
+    const statusConfig = {
+      available: { label: "Доступен", variant: "default" as const, className: "bg-success hover:bg-success" },
+      busy: { label: "Занят", variant: "default" as const, className: "bg-warning hover:bg-warning" },
+      offline: { label: "Оффлайн", variant: "secondary" as const, className: "" }
+    };
+    
+    return statusConfig[status];
   };
 
   return (
@@ -75,9 +150,31 @@ const Employee = () => {
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-sm">
-                На линии
-              </Badge>
+              {currentEmployee && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant={getStatusBadge(currentEmployee.status).variant}
+                      size="sm"
+                      className={`gap-1 ${getStatusBadge(currentEmployee.status).className}`}
+                    >
+                      {getStatusBadge(currentEmployee.status).label}
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleEmployeeStatusChange("available")}>
+                      🟢 Доступен
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEmployeeStatusChange("busy")}>
+                      🟡 Занят
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEmployeeStatusChange("offline")}>
+                      ⚫ Оффлайн
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               <Button
                 variant="ghost"
                 size="icon"

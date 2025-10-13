@@ -59,3 +59,44 @@ export const useCreateEmployee = () => {
     },
   });
 };
+
+export const useGetCurrentEmployee = () => {
+  return useQuery({
+    queryKey: ["current-employee"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Не авторизован");
+      }
+
+      const { data, error } = await supabase
+        .from("employees")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (error) throw error;
+      return data as Employee;
+    },
+  });
+};
+
+export const useUpdateEmployeeStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ employeeId, status }: { employeeId: string; status: "available" | "busy" | "offline" }) => {
+      const { error } = await supabase
+        .from("employees")
+        .update({ status })
+        .eq("id", employeeId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] });
+      queryClient.invalidateQueries({ queryKey: ["current-employee"] });
+    },
+  });
+};
