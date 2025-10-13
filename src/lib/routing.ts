@@ -142,8 +142,8 @@ export function parsePointToCoordinates(point: string | null): RoutePoint | null
 }
 
 /**
- * Format coordinates to PostGIS Point format
+ * Format coordinates to PostgreSQL Point format
  */
 export function formatToPostGISPoint(lat: number, lng: number): string {
-  return `POINT(${lng} ${lat})`;
+  return `(${lng},${lat})`;
 }
