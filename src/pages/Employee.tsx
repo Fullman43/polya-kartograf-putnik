@@ -26,6 +26,9 @@ import { useGetCurrentEmployee, useUpdateEmployeeStatus } from "@/hooks/useEmplo
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCreateComment } from "@/hooks/useTaskComments";
+import { useUploadTaskPhoto } from "@/hooks/useTaskPhotos";
+import { Input } from "@/components/ui/input";
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -36,6 +39,8 @@ const Employee = () => {
   const updateTask = useUpdateTask();
   const updateEmployeeStatus = useUpdateEmployeeStatus();
   const queryClient = useQueryClient();
+  const createComment = useCreateComment();
+  const uploadPhoto = useUploadTaskPhoto();
   
   const [comment, setComment] = useState("");
   const [watchId, setWatchId] = useState<number | null>(null);
@@ -514,12 +519,45 @@ const Employee = () => {
                     rows={3}
                     className="resize-none"
                   />
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2 mt-2"
+                    disabled={!comment.trim() || createComment.isPending}
+                    onClick={async () => {
+                      if (!currentTask || !comment.trim()) return;
+                      await createComment.mutateAsync({
+                        taskId: currentTask.id,
+                        comment: comment.trim(),
+                      });
+                      setComment("");
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    {createComment.isPending ? "Отправка..." : "Отправить комментарий"}
+                  </Button>
                 </div>
 
-                <Button variant="outline" className="w-full gap-2">
-                  <Camera className="h-4 w-4" />
-                  Добавить фото отчёт
-                </Button>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    <Camera className="h-4 w-4 inline mr-1" />
+                    Фото отчёт
+                  </label>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !currentTask) return;
+                      
+                      await uploadPhoto.mutateAsync({
+                        taskId: currentTask.id,
+                        file,
+                      });
+                      e.target.value = "";
+                    }}
+                    disabled={uploadPhoto.isPending}
+                  />
+                </div>
               </div>
             </Card>
           </>

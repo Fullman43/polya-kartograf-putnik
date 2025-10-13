@@ -14,9 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MapPin, Clock, User, Phone } from "lucide-react";
+import { MapPin, Clock, User, Phone, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { TaskDetailsDialog } from "@/components/dashboard/TaskDetailsDialog";
+import type { Task } from "@/hooks/useTasks";
 
 const Tasks = () => {
   const navigate = useNavigate();
@@ -25,6 +27,8 @@ const Tasks = () => {
   const { data: employees } = useEmployees();
   const updateTask = useUpdateTask();
   const [filter, setFilter] = useState<string>("all");
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
   // Translation function for work types
@@ -65,6 +69,22 @@ const Tasks = () => {
       }, () => {
         console.log('Employee data changed - refreshing');
         queryClient.invalidateQueries({ queryKey: ['employees'] });
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'task_comments' 
+      }, () => {
+        console.log('Comments changed - refreshing');
+        queryClient.invalidateQueries({ queryKey: ['task-comments'] });
+      })
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'task_photos' 
+      }, () => {
+        console.log('Photos changed - refreshing');
+        queryClient.invalidateQueries({ queryKey: ['task-photos'] });
       })
       .subscribe();
 
@@ -201,10 +221,21 @@ const Tasks = () => {
                 </div>
 
                 <div className="flex items-center gap-4 pt-2 border-t">
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-sm flex-1">
                     <span className="text-muted-foreground">Исполнитель:</span>
                     <span className="font-medium">{getEmployeeName(task.assigned_employee_id)}</span>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setDetailsDialogOpen(true);
+                    }}
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Подробнее
+                  </Button>
                   {task.status !== "completed" && task.status !== "cancelled" && (
                     <Select
                       value={task.assigned_employee_id || ""}
@@ -236,6 +267,12 @@ const Tasks = () => {
           )}
         </div>
       </div>
+
+      <TaskDetailsDialog
+        task={selectedTask}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+      />
     </Layout>
   );
 };
