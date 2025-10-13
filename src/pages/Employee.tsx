@@ -42,7 +42,7 @@ const Employee = () => {
   const createComment = useCreateComment();
   const uploadPhoto = useUploadTaskPhoto();
   
-  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState<Record<string, string>>({});
   const [watchId, setWatchId] = useState<number | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [gpsStatus, setGpsStatus] = useState<"active" | "unavailable" | "loading">("loading");
@@ -567,63 +567,64 @@ const Employee = () => {
                           </Button>
                         </div>
                       </div>
-
-                      {/* Comments and Photo */}
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">
-                            <MessageSquare className="h-4 w-4 inline mr-1" />
-                            Комментарий
-                          </label>
-                          <Textarea
-                            placeholder="Добавить примечание..."
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            rows={3}
-                            className="resize-none"
-                          />
-                          <Button 
-                            variant="outline" 
-                            className="w-full gap-2 mt-2"
-                            disabled={!comment.trim() || createComment.isPending}
-                            onClick={async () => {
-                              if (!task || !comment.trim()) return;
-                              await createComment.mutateAsync({
-                                taskId: task.id,
-                                comment: comment.trim(),
-                              });
-                              setComment("");
-                            }}
-                          >
-                            <MessageSquare className="h-4 w-4" />
-                            {createComment.isPending ? "Отправка..." : "Отправить комментарий"}
-                          </Button>
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-medium mb-2 block">
-                            <Camera className="h-4 w-4 inline mr-1" />
-                            Фото отчёт
-                          </label>
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file || !task) return;
-                              
-                              await uploadPhoto.mutateAsync({
-                                taskId: task.id,
-                                file,
-                              });
-                              e.target.value = "";
-                            }}
-                            disabled={uploadPhoto.isPending}
-                          />
-                        </div>
-                      </div>
                     </>
                   )}
+
+                  {/* Comments and Photos - available for all tasks */}
+                  <div className="space-y-3 mt-4 pt-4 border-t">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        <MessageSquare className="h-4 w-4 inline mr-1" />
+                        Комментарий
+                      </label>
+                      <Textarea
+                        placeholder="Добавить примечание..."
+                        value={comments[task.id] || ""}
+                        onChange={(e) => setComments(prev => ({ ...prev, [task.id]: e.target.value }))}
+                        rows={3}
+                        className="resize-none"
+                      />
+                      <Button 
+                        variant="outline" 
+                        className="w-full gap-2 mt-2"
+                        disabled={!comments[task.id]?.trim() || createComment.isPending}
+                        onClick={async () => {
+                          const currentComment = comments[task.id]?.trim();
+                          if (!task || !currentComment) return;
+                          await createComment.mutateAsync({
+                            taskId: task.id,
+                            comment: currentComment,
+                          });
+                          setComments(prev => ({ ...prev, [task.id]: "" }));
+                        }}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                        {createComment.isPending ? "Отправка..." : "Отправить комментарий"}
+                      </Button>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">
+                        <Camera className="h-4 w-4 inline mr-1" />
+                        Фото отчёт
+                      </label>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file || !task) return;
+                          
+                          await uploadPhoto.mutateAsync({
+                            taskId: task.id,
+                            file,
+                          });
+                          e.target.value = "";
+                        }}
+                        disabled={uploadPhoto.isPending}
+                      />
+                    </div>
+                  </div>
                 </Card>
               );
             })}
