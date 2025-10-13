@@ -88,7 +88,7 @@ const Employee = () => {
       const id = navigator.geolocation.watchPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          const location = `POINT(${longitude} ${latitude})`;
+          const location = `(${longitude},${latitude})`;
           
           setCurrentLocation({ latitude, longitude });
           setGpsStatus("active");
