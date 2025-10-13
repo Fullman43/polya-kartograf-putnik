@@ -2,8 +2,10 @@ import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, addMonths, subMonths } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, addMonths, subMonths, isWithinInterval } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useTasks } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
@@ -15,6 +17,10 @@ export function CalendarReport() {
 
   const [selectedEmployee, setSelectedEmployee] = useState<string>("all");
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
 
   const workDaysData = useMemo(() => {
     if (!tasks) return new Map<string, { totalMinutes: number; tasksCount: number }>();
@@ -92,6 +98,36 @@ export function CalendarReport() {
   const firstDayOfMonth = startOfMonth(currentMonth).getDay();
   const paddingDays = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
+  // Calculate total time for current month
+  const monthTotalMinutes = useMemo(() => {
+    let total = 0;
+    monthDays.forEach(day => {
+      const dateKey = format(day, "yyyy-MM-dd");
+      const dayData = workDaysData.get(dateKey);
+      if (dayData) {
+        total += dayData.totalMinutes;
+      }
+    });
+    return total;
+  }, [monthDays, workDaysData]);
+
+  // Calculate total time for selected period
+  const periodTotalMinutes = useMemo(() => {
+    if (!dateRange.from || !dateRange.to) return null;
+    
+    let total = 0;
+    const periodDays = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
+    
+    periodDays.forEach(day => {
+      const dateKey = format(day, "yyyy-MM-dd");
+      const dayData = workDaysData.get(dateKey);
+      if (dayData) {
+        total += dayData.totalMinutes;
+      }
+    });
+    return total;
+  }, [dateRange, workDaysData]);
+
   return (
     <div className="space-y-6">
       <div>
@@ -104,19 +140,59 @@ export function CalendarReport() {
           <CardTitle>Фильтры</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Специалист</label>
-            <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-              <SelectTrigger>
-                <SelectValue placeholder="Выберите специалиста" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Все специалисты</SelectItem>
-                {employees?.map(emp => (
-                  <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Специалист</label>
+              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите специалиста" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Все специалисты</SelectItem>
+                  {employees?.map(emp => (
+                    <SelectItem key={emp.id} value={emp.id}>{emp.full_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Период для анализа</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dateRange.from && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "dd MMM yyyy", { locale: ru })} -{" "}
+                          {format(dateRange.to, "dd MMM yyyy", { locale: ru })}
+                        </>
+                      ) : (
+                        format(dateRange.from, "dd MMM yyyy", { locale: ru })
+                      )
+                    ) : (
+                      <span>Выберите период</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    selected={{ from: dateRange.from, to: dateRange.to }}
+                    onSelect={(range) => setDateRange({ from: range?.from, to: range?.to })}
+                    locale={ru}
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -180,27 +256,45 @@ export function CalendarReport() {
             })}
           </div>
 
-          <div className="mt-6 flex items-center gap-4 text-sm">
-            <span className="text-muted-foreground">Интенсивность:</span>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-success/20 rounded border" />
-              <span className="text-xs">2ч</span>
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-muted-foreground">Интенсивность:</span>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-success/20 rounded border" />
+                <span className="text-xs">2ч</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-success/40 rounded border" />
+                <span className="text-xs">4ч</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-success/60 rounded border" />
+                <span className="text-xs">6ч</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-success/80 rounded border" />
+                <span className="text-xs">8ч</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-success rounded border" />
+                <span className="text-xs">8ч+</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-success/40 rounded border" />
-              <span className="text-xs">4ч</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-success/60 rounded border" />
-              <span className="text-xs">6ч</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-success/80 rounded border" />
-              <span className="text-xs">8ч</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-success rounded border" />
-              <span className="text-xs">8ч+</span>
+
+            <div className="pt-4 border-t">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                  <span className="text-sm font-medium">Общее время за месяц:</span>
+                  <span className="text-lg font-bold text-primary">{formatHours(monthTotalMinutes)}</span>
+                </div>
+                
+                {periodTotalMinutes !== null && dateRange.from && dateRange.to && (
+                  <div className="flex items-center justify-between p-3 bg-primary/10 rounded-lg">
+                    <span className="text-sm font-medium">Время за выбранный период:</span>
+                    <span className="text-lg font-bold text-primary">{formatHours(periodTotalMinutes)}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
