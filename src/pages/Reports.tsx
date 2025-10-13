@@ -1,11 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTasks } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { ActualWorkTimeReport } from "@/components/reports/ActualWorkTimeReport";
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -69,123 +71,136 @@ const Reports = () => {
   return (
     <Layout>
       <div className="container mx-auto p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Отчеты и аналитика</h1>
-          <p className="text-muted-foreground">Статистика работы и выполнения задач</p>
-        </div>
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="overview">Общая статистика</TabsTrigger>
+            <TabsTrigger value="worktime">Фактическое время работы</TabsTrigger>
+          </TabsList>
 
-        {/* Общая статистика */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Всего задач</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalTasks}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Выполнено</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-success">{completedTasks}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">В работе</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-warning">{activeTasks}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Процент выполнения</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">{completionRate}%</div>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="overview" className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">Отчеты и аналитика</h1>
+              <p className="text-muted-foreground">Статистика работы и выполнения задач</p>
+            </div>
 
-        {/* Графики */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Распределение задач по статусам</CardTitle>
-              <CardDescription>Текущее состояние всех задач</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            {/* Общая статистика */}
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Всего задач</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalTasks}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Выполнено</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-success">{completedTasks}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">В работе</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-warning">{activeTasks}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Процент выполнения</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-primary">{completionRate}%</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Графики */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Распределение задач по статусам</CardTitle>
+                  <CardDescription>Текущее состояние всех задач</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={statusData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {statusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Задачи по сотрудникам</CardTitle>
+                  <CardDescription>Количество назначенных задач на каждого сотрудника</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={employeeData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="tasks" fill="#0088FE" name="Задачи" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Список задач в ожидании */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Задачи в ожидании</CardTitle>
+                <CardDescription>Задачи, которые требуют назначения или внимания</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {pendingTasks > 0 ? (
+                  <div className="space-y-2">
+                    {tasks?.filter(t => t.status === "pending").slice(0, 5).map(task => (
+                      <div key={task.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div>
+                          <p className="font-medium">{task.work_type}</p>
+                          <p className="text-sm text-muted-foreground">{task.address}</p>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(task.scheduled_time).toLocaleString("ru-RU")}
+                        </div>
+                      </div>
                     ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Задачи по сотрудникам</CardTitle>
-              <CardDescription>Количество назначенных задач на каждого сотрудника</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={employeeData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="tasks" fill="#0088FE" name="Задачи" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Список задач в ожидании */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Задачи в ожидании</CardTitle>
-            <CardDescription>Задачи, которые требуют назначения или внимания</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {pendingTasks > 0 ? (
-              <div className="space-y-2">
-                {tasks?.filter(t => t.status === "pending").slice(0, 5).map(task => (
-                  <div key={task.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <div>
-                      <p className="font-medium">{task.work_type}</p>
-                      <p className="text-sm text-muted-foreground">{task.address}</p>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(task.scheduled_time).toLocaleString("ru-RU")}
-                    </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">Нет задач в ожидании</p>
-            )}
-          </CardContent>
-        </Card>
+                ) : (
+                  <p className="text-muted-foreground">Нет задач в ожидании</p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="worktime">
+            <ActualWorkTimeReport />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
