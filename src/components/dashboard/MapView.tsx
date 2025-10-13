@@ -8,6 +8,7 @@ import { useTasks } from "@/hooks/useTasks";
 import { useToast } from "@/hooks/use-toast";
 import { isToday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 declare global {
   interface Window {
@@ -27,6 +28,7 @@ const MapView = () => {
   const { data: employees, isLoading: loadingEmployees } = useEmployees();
   const { data: tasks, isLoading: loadingTasks } = useTasks();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Filter active tasks (not completed or cancelled)
   const activeTasks = tasks?.filter(t => t.status !== 'completed' && t.status !== 'cancelled') || [];
@@ -233,23 +235,23 @@ const MapView = () => {
         schema: 'public', 
         table: 'employees' 
       }, () => {
-        // Refresh employees data
         console.log('Employee data changed');
+        queryClient.invalidateQueries({ queryKey: ['employees'] });
       })
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
         table: 'tasks' 
       }, () => {
-        // Refresh tasks data
         console.log('Task data changed');
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <div className="relative h-full w-full bg-muted">
