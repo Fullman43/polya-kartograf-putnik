@@ -61,14 +61,14 @@ const EmployeeListReal = () => {
           return (
             <div
               key={employee.id}
-              className="p-3 bg-sidebar-accent rounded-lg cursor-pointer hover:bg-sidebar-accent/80 transition-colors"
+              className="p-3 bg-card rounded-lg cursor-pointer hover:bg-accent transition-colors border border-border"
             >
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                     <User className="h-4 w-4 text-primary" />
                   </div>
-                  <span className="text-sm font-medium text-sidebar-foreground">
+                  <span className="text-sm font-medium text-foreground">
                     {employee.full_name}
                   </span>
                 </div>
@@ -77,11 +77,11 @@ const EmployeeListReal = () => {
 
               {currentTask && (
                 <div className="ml-10 space-y-1">
-                  <div className="flex items-start gap-2 text-xs text-sidebar-foreground/70">
+                  <div className="flex items-start gap-2 text-xs text-muted-foreground">
                     <MapPin className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                     <span className="line-clamp-1">{currentTask.address}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-sidebar-foreground/70">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3.5 w-3.5" />
                     <span>{new Date(currentTask.scheduled_time).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</span>
                   </div>
