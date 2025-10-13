@@ -15,6 +15,19 @@ const Reports = () => {
   const { data: tasks } = useTasks();
   const { data: employees } = useEmployees();
 
+  // Translation function for work types
+  const translateWorkType = (workType: string): string => {
+    const translations: Record<string, string> = {
+      'repair': 'Ремонт',
+      'diagnostics': 'Диагностика',
+      'installation': 'Установка',
+      'maintenance': 'Обслуживание',
+      'consultation': 'Консультация',
+      'inspection': 'Осмотр'
+    };
+    return translations[workType.toLowerCase()] || workType;
+  };
+
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
@@ -181,7 +194,7 @@ const Reports = () => {
                     {tasks?.filter(t => t.status === "pending").slice(0, 5).map(task => (
                       <div key={task.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div>
-                          <p className="font-medium">{task.work_type}</p>
+                          <p className="font-medium">{translateWorkType(task.work_type)}</p>
                           <p className="text-sm text-muted-foreground">{task.address}</p>
                         </div>
                         <div className="text-sm text-muted-foreground">

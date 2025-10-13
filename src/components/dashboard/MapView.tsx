@@ -30,6 +30,19 @@ const MapView = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Translation function for work types
+  const translateWorkType = (workType: string): string => {
+    const translations: Record<string, string> = {
+      'repair': 'Ремонт',
+      'diagnostics': 'Диагностика',
+      'installation': 'Установка',
+      'maintenance': 'Обслуживание',
+      'consultation': 'Консультация',
+      'inspection': 'Осмотр'
+    };
+    return translations[workType.toLowerCase()] || workType;
+  };
+
   // Filter active tasks (not completed or cancelled)
   const activeTasks = tasks?.filter(t => t.status !== 'completed' && t.status !== 'cancelled') || [];
   
@@ -194,7 +207,7 @@ const MapView = () => {
                 balloonContent: `
                   <div style="padding: 8px;">
                     <strong>${task.address}</strong><br/>
-                    <span>Тип: ${task.work_type}</span><br/>
+                    <span>Тип: ${translateWorkType(task.work_type)}</span><br/>
                     <span>Время: ${new Date(task.scheduled_time).toLocaleString("ru-RU")}</span>
                   </div>
                 `,
@@ -308,7 +321,7 @@ const MapView = () => {
                 <option value="">Выберите задачу</option>
                 {tasksWithLocation.map(t => (
                   <option key={t.id} value={t.id}>
-                    {t.address} - {t.work_type}
+                    {t.address} - {translateWorkType(t.work_type)}
                   </option>
                 ))}
               </select>

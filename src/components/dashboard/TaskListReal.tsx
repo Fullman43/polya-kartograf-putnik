@@ -8,6 +8,19 @@ const TaskListReal = () => {
   const { data: tasks, isLoading } = useTasks();
   const { data: employees } = useEmployees();
 
+  // Translation function for work types
+  const translateWorkType = (workType: string): string => {
+    const translations: Record<string, string> = {
+      'repair': 'Ремонт',
+      'diagnostics': 'Диагностика',
+      'installation': 'Установка',
+      'maintenance': 'Обслуживание',
+      'consultation': 'Консультация',
+      'inspection': 'Осмотр'
+    };
+    return translations[workType.toLowerCase()] || workType;
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
@@ -89,7 +102,7 @@ const TaskListReal = () => {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-sm font-medium text-sidebar-foreground">
-                    {task.work_type}
+                    {translateWorkType(task.work_type)}
                   </span>
                   {getStatusBadge(task.status)}
                 </div>

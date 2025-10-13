@@ -27,6 +27,19 @@ const Tasks = () => {
   const [filter, setFilter] = useState<string>("all");
   const queryClient = useQueryClient();
 
+  // Translation function for work types
+  const translateWorkType = (workType: string): string => {
+    const translations: Record<string, string> = {
+      'repair': 'Ремонт',
+      'diagnostics': 'Диагностика',
+      'installation': 'Установка',
+      'maintenance': 'Обслуживание',
+      'consultation': 'Консультация',
+      'inspection': 'Осмотр'
+    };
+    return translations[workType.toLowerCase()] || workType;
+  };
+
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
@@ -150,7 +163,7 @@ const Tasks = () => {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <CardTitle className="flex items-center gap-2">
-                      {task.work_type}
+                      {translateWorkType(task.work_type)}
                       {getStatusBadge(task.status)}
                       {getPriorityBadge(task.priority)}
                     </CardTitle>
