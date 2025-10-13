@@ -2,3 +2,9 @@ project_id = "kyslsedzcxdwbnvvwvwn"
 
 [functions.create-employee]
 verify_jwt = true
+
+[functions.geocode-address]
+verify_jwt = false
+
+[functions.geocode-existing-tasks]
+verify_jwt = false

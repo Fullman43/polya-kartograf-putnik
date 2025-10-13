@@ -57,7 +57,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       if (!coordinates) {
         toast({
           title: "Ошибка геокодирования",
-          description: "Не удалось найти координаты для указанного адреса",
+          description: "Не удалось определить координаты адреса. Проверьте правильность написания и попробуйте указать более полный адрес (город, улица, дом).",
           variant: "destructive",
         });
         setIsGeocoding(false);

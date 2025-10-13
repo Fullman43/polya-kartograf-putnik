@@ -1,6 +1,5 @@
 // Yandex APIs integration
 const ROUTING_API_KEY = "7d6de12a-0616-42db-b088-c5023c2c4aaa";
-const GEOCODING_API_KEY = "7d6de12a-0616-42db-b088-c5023c2c4aaa";
 
 export interface RoutePoint {
   lat: number;
@@ -93,32 +92,27 @@ export function calculateETA(durationSeconds: number): string {
 }
 
 /**
- * Geocode address to coordinates using Yandex Geocoding API
+ * Geocode address to coordinates using backend Edge Function
  */
 export async function geocodeAddress(address: string): Promise<RoutePoint | null> {
   try {
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${GEOCODING_API_KEY}&geocode=${encodeURIComponent(address)}&format=json`;
+    const { supabase } = await import("@/integrations/supabase/client");
     
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.error("Geocoding API error:", response.statusText);
+    const { data, error } = await supabase.functions.invoke('geocode-address', {
+      body: { address }
+    });
+
+    if (error) {
+      console.error("Geocoding error:", error);
       return null;
     }
 
-    const data = await response.json();
-    
-    const geoObject = data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
-    if (!geoObject) {
-      console.error("No geocoding results found for:", address);
+    if (!data || typeof data.lat !== 'number' || typeof data.lng !== 'number') {
+      console.error("Invalid geocoding response:", data);
       return null;
     }
 
-    const coords = geoObject.Point.pos.split(" ");
-    const lng = parseFloat(coords[0]);
-    const lat = parseFloat(coords[1]);
-
-    return { lat, lng };
+    return { lat: data.lat, lng: data.lng };
   } catch (error) {
     console.error("Failed to geocode address:", error);
     return null;

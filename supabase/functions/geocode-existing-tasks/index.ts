@@ -5,11 +5,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const GEOCODING_API_KEY = "7d6de12a-0616-42db-b088-c5023c2c4aaa";
-
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
   try {
-    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${GEOCODING_API_KEY}&geocode=${encodeURIComponent(address)}&format=json`;
+    const geocodingApiKey = Deno.env.get('YANDEX_GEOCODING_API_KEY');
+    
+    if (!geocodingApiKey) {
+      console.error('YANDEX_GEOCODING_API_KEY is not set');
+      return null;
+    }
+
+    const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${geocodingApiKey}&geocode=${encodeURIComponent(address)}&format=json`;
     
     const response = await fetch(url);
     
