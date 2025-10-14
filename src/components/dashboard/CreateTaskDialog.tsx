@@ -76,7 +76,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         customer_name: formData.customerName || null,
         customer_phone: formData.customerPhone || null,
         priority: formData.priority as "low" | "medium" | "high" | "urgent",
-        status: "pending",
+        status: formData.employee ? "assigned" : "pending",
       });
       
       onOpenChange(false);
