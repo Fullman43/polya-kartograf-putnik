@@ -36,6 +36,7 @@ const MapView = () => {
       'repair': 'Ремонт',
       'diagnostics': 'Диагностика',
       'installation': 'Установка',
+      'mounting': 'Монтаж',
       'maintenance': 'Обслуживание',
       'consultation': 'Консультация',
       'inspection': 'Осмотр'

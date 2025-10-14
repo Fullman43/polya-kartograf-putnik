@@ -23,6 +23,7 @@ export const TaskDetailsDialog = ({ task, open, onOpenChange }: TaskDetailsDialo
       'repair': 'Ремонт',
       'diagnostics': 'Диагностика',
       'installation': 'Установка',
+      'mounting': 'Монтаж',
       'maintenance': 'Обслуживание',
       'consultation': 'Консультация',
       'inspection': 'Осмотр'

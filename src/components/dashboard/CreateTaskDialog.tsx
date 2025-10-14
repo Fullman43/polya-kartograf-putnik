@@ -167,6 +167,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="installation">Установка</SelectItem>
+                <SelectItem value="mounting">Монтаж</SelectItem>
                 <SelectItem value="repair">Ремонт</SelectItem>
                 <SelectItem value="diagnostics">Диагностика</SelectItem>
                 <SelectItem value="configuration">Настройка</SelectItem>
