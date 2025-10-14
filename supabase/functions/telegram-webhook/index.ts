@@ -265,7 +265,16 @@ async function handleCommand(message: TelegramMessage) {
   if (text.startsWith('/tasks') || text === '📋 Мои задачи') {
     const tasks = await getUserTasks(employee.id);
     if (tasks.length === 0) {
-      await sendMessage(chatId, '📋 Нет активных задач');
+      await sendMessage(chatId, '📋 Нет активных задач', {
+        reply_markup: {
+          keyboard: [
+            [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }],
+            [{ text: '✅ Завершенные задачи' }, { text: '📊 Мой статус' }],
+          ],
+          resize_keyboard: true,
+          persistent: true,
+        },
+      });
       return;
     }
 
@@ -294,7 +303,16 @@ async function handleCommand(message: TelegramMessage) {
     const activeTasks = tasks.filter(t => ['assigned', 'en_route', 'in_progress'].includes(t.status));
 
     if (activeTasks.length === 0) {
-      await sendMessage(chatId, '📋 Нет активных задач');
+      await sendMessage(chatId, '📋 Нет активных задач', {
+        reply_markup: {
+          keyboard: [
+            [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }],
+            [{ text: '✅ Завершенные задачи' }, { text: '📊 Мой статус' }],
+          ],
+          resize_keyboard: true,
+          persistent: true,
+        },
+      });
       return;
     }
 
@@ -309,7 +327,16 @@ async function handleCommand(message: TelegramMessage) {
   if (text.startsWith('/completed') || text === '✅ Завершенные задачи') {
     const tasks = await getUserTasks(employee.id, 'completed');
     if (tasks.length === 0) {
-      await sendMessage(chatId, '📋 Нет завершенных задач');
+      await sendMessage(chatId, '📋 Нет завершенных задач', {
+        reply_markup: {
+          keyboard: [
+            [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }],
+            [{ text: '✅ Завершенные задачи' }, { text: '📊 Мой статус' }],
+          ],
+          resize_keyboard: true,
+          persistent: true,
+        },
+      });
       return;
     }
 
