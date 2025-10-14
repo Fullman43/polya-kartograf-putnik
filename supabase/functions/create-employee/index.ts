@@ -66,20 +66,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get user's organization_id
+    // Get user's organization_id (can be null for organization_owners without org)
     const { data: employeeData, error: empError } = await supabaseAdmin
       .from('employees')
       .select('organization_id')
       .eq('user_id', user.id)
       .single();
 
-    if (empError || !employeeData?.organization_id) {
-      console.error('Organization check error:', empError);
+    if (empError) {
+      console.error('Employee lookup error:', empError);
       return new Response(
-        JSON.stringify({ error: 'Организация не найдена' }),
+        JSON.stringify({ error: 'Не удалось найти данные пользователя' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // Allow organization_id to be null for organization_owners and operators without org
+    const organizationId = employeeData?.organization_id || null;
 
     // Parse and validate request body
     const body: CreateEmployeeRequest = await req.json();
@@ -117,7 +120,7 @@ Deno.serve(async (req) => {
         full_name,
         phone: phone || null,
         role,
-        organization_id: employeeData.organization_id,
+        organization_id: organizationId,
       },
     });
 
