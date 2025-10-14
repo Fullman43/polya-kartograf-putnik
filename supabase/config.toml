@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.geocode-existing-tasks]
 verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.telegram-setup]
+verify_jwt = false

@@ -1,0 +1,38 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+
+serve(async (req) => {
+  try {
+    const webhookUrl = `${SUPABASE_URL}/functions/v1/telegram-webhook`;
+
+    console.log('Setting webhook to:', webhookUrl);
+
+    const response = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: webhookUrl,
+          allowed_updates: ['message', 'callback_query'],
+        }),
+      }
+    );
+
+    const data = await response.json();
+    console.log('Webhook setup response:', data);
+
+    return new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error setting up webhook:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+});

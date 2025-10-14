@@ -29,6 +29,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCreateComment } from "@/hooks/useTaskComments";
 import { useUploadTaskPhoto } from "@/hooks/useTaskPhotos";
 import { Input } from "@/components/ui/input";
+import { TelegramSettings } from "@/components/employee/TelegramSettings";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -373,8 +375,15 @@ const Employee = () => {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Filter Buttons */}
-        <div className="flex gap-2 overflow-x-auto pb-2">
+        <Tabs defaultValue="tasks" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="tasks">Задачи</TabsTrigger>
+            <TabsTrigger value="telegram">Telegram</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="tasks" className="space-y-6 mt-6">
+            {/* Filter Buttons */}
+            <div className="flex gap-2 overflow-x-auto pb-2">
           <Button
             variant={taskFilter === "active" ? "default" : "outline"}
             size="sm"
@@ -399,18 +408,18 @@ const Employee = () => {
           >
             Ожидают назначения
           </Button>
-        </div>
+            </div>
 
-        {filteredTasks.length === 0 ? (
+            {filteredTasks.length === 0 ? (
           <Card className="p-6 text-center">
             <p className="text-muted-foreground">
               {taskFilter === "active" && "Нет активных задач"}
               {taskFilter === "completed" && "Нет завершенных задач"}
               {taskFilter === "pending" && "Нет задач в ожидании"}
             </p>
-          </Card>
-        ) : (
-          <div className="space-y-3">
+              </Card>
+            ) : (
+              <div className="space-y-3">
             {filteredTasks.map((task) => {
               const isCurrentTask = currentTask?.id === task.id;
               
@@ -628,8 +637,14 @@ const Employee = () => {
                 </Card>
               );
             })}
-          </div>
-        )}
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="telegram" className="mt-6">
+            <TelegramSettings />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
