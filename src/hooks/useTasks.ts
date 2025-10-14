@@ -29,23 +29,19 @@ export const useCreateTask = () => {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Не авторизован");
 
-      // Get user's organization_id
-      const { data: employeeData, error: empError } = await supabase
+      // Get user's organization_id (can be null for existing users)
+      const { data: employeeData } = await supabase
         .from("employees")
         .select("organization_id")
         .eq("user_id", userData.user.id)
         .single();
-
-      if (empError || !employeeData?.organization_id) {
-        throw new Error("Организация не найдена");
-      }
 
       const { data, error } = await supabase
         .from("tasks")
         .insert({
           ...task,
           created_by: userData.user.id,
-          organization_id: employeeData.organization_id,
+          organization_id: employeeData?.organization_id || null,
         })
         .select()
         .single();
