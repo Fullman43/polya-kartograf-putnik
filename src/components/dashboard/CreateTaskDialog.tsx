@@ -33,7 +33,10 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
-    address: "",
+    city: "",
+    street: "",
+    houseNumber: "",
+    apartment: "",
     type: "",
     description: "",
     date: new Date().toISOString().split("T")[0],
@@ -51,13 +54,16 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
     setIsGeocoding(true);
     
     try {
+      // Construct full address from separate fields
+      const fullAddress = `${formData.city} ${formData.street} ${formData.houseNumber} ${formData.apartment ? 'кв. ' + formData.apartment : ''}`.trim();
+      
       // Geocode the address
-      const coordinates = await geocodeAddress(formData.address);
+      const coordinates = await geocodeAddress(fullAddress);
       
       if (!coordinates) {
         toast({
           title: "Ошибка геокодирования",
-          description: "Не удалось определить координаты адреса. Проверьте правильность написания и попробуйте указать более полный адрес (город, улица, дом).",
+          description: "Не удалось определить координаты адреса. Проверьте правильность написания.",
           variant: "destructive",
         });
         setIsGeocoding(false);
@@ -67,7 +73,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       const scheduledDateTime = `${formData.date}T${formData.time}:00`;
       
       await createTask.mutateAsync({
-        address: formData.address,
+        address: fullAddress,
         location: formatToPostGISPoint(coordinates.lat, coordinates.lng) as any,
         work_type: formData.type,
         description: formData.description || null,
@@ -81,7 +87,10 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       
       onOpenChange(false);
       setFormData({
-        address: "",
+        city: "",
+        street: "",
+        houseNumber: "",
+        apartment: "",
         type: "",
         description: "",
         date: new Date().toISOString().split("T")[0],
@@ -140,17 +149,59 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="address">Адрес</Label>
-            <Input
-              id="address"
-              placeholder="ул. Ленина, д. 45"
-              value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="city">Город</Label>
+              <Input
+                id="city"
+                placeholder="г. Москва"
+                value={formData.city}
+                onChange={(e) =>
+                  setFormData({ ...formData, city: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="street">Улица</Label>
+              <Input
+                id="street"
+                placeholder="ул. Ленина"
+                value={formData.street}
+                onChange={(e) =>
+                  setFormData({ ...formData, street: e.target.value })
+                }
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="houseNumber">Номер дома</Label>
+              <Input
+                id="houseNumber"
+                placeholder="д. 45"
+                value={formData.houseNumber}
+                onChange={(e) =>
+                  setFormData({ ...formData, houseNumber: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="apartment">Квартира</Label>
+              <Input
+                id="apartment"
+                placeholder="кв. 12 (необязательно)"
+                value={formData.apartment}
+                onChange={(e) =>
+                  setFormData({ ...formData, apartment: e.target.value })
+                }
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
