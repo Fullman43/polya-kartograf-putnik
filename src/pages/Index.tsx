@@ -24,21 +24,18 @@ const Index = () => {
             <MapPin className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium text-primary">Контроль выездных сотрудников</span>
           </div>
-          
+
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
             Управление и мониторинг полевого персонала
           </h1>
-          
+
           <p className="text-xl text-muted-foreground mb-8">
-            Отслеживайте местоположение сотрудников, управляйте задачами и оптимизируйте 
-            логистику в режиме реального времени
+            Отслеживайте местоположение сотрудников, управляйте задачами и оптимизируйте логистику в режиме реального
+            времени
           </p>
 
           <div className="flex gap-4 justify-center">
-            <Button 
-              size="lg" 
-              onClick={() => navigate("/auth")}
-            >
+            <Button size="lg" onClick={() => navigate("/auth")}>
               Войти в систему
             </Button>
           </div>
@@ -61,9 +58,7 @@ const Index = () => {
               <Clock className="h-6 w-6 text-success" />
             </div>
             <h3 className="text-lg font-semibold mb-2">Отслеживание статусов</h3>
-            <p className="text-muted-foreground">
-              Контроль прогресса работы с GPS-метками и временными штампами
-            </p>
+            <p className="text-muted-foreground">Контроль прогресса работы с GPS-метками и временными штампами</p>
           </Card>
 
           <Card className="p-6 shadow-card hover:shadow-lg transition-shadow">
@@ -71,9 +66,7 @@ const Index = () => {
               <BarChart3 className="h-6 w-6 text-warning" />
             </div>
             <h3 className="text-lg font-semibold mb-2">Аналитика и отчёты</h3>
-            <p className="text-muted-foreground">
-              Детальная статистика по времени, маршрутам и эффективности команды
-            </p>
+            <p className="text-muted-foreground">Детальная статистика по времени, маршрутам и эффективности команды</p>
           </Card>
         </div>
 
