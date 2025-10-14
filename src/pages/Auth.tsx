@@ -44,7 +44,12 @@ const Auth = () => {
             .eq("user_id", session.user.id)
             .single();
           
-          if (userRole?.role === "operator" || userRole?.role === "manager") {
+          if (
+            userRole?.role === "operator" || 
+            userRole?.role === "manager" ||
+            userRole?.role === "organization_owner" ||
+            userRole?.role === "organization_admin"
+          ) {
             navigate("/dashboard");
           } else {
             navigate("/employee");
