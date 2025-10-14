@@ -251,6 +251,78 @@ export type Database = {
           },
         ]
       }
+      telegram_auth_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      telegram_bot_state: {
+        Row: {
+          state: Json
+          telegram_id: number
+          updated_at: string
+        }
+        Insert: {
+          state?: Json
+          telegram_id: number
+          updated_at?: string
+        }
+        Update: {
+          state?: Json
+          telegram_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      telegram_users: {
+        Row: {
+          created_at: string
+          id: string
+          last_active_at: string
+          telegram_id: number
+          telegram_username: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          telegram_id: number
+          telegram_username?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_active_at?: string
+          telegram_id?: number
+          telegram_username?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
