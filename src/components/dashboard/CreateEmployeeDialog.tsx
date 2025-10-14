@@ -45,7 +45,7 @@ const employeeSchema = z.object({
     .string()
     .min(6, { message: "Пароль должен содержать минимум 6 символов" })
     .max(72, { message: "Пароль должен быть меньше 72 символов" }),
-  role: z.enum(["employee", "operator", "manager", "client"], {
+  role: z.enum(["employee", "operator", "manager", "client", "organization_admin"], {
     required_error: "Выберите роль",
   }),
 });
@@ -216,6 +216,14 @@ export function CreateEmployeeDialog({
                           <span className="font-medium">Клиент</span>
                           <span className="text-xs text-muted-foreground">
                             Доступ к статусам заявок и истории работ
+                          </span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="organization_admin">
+                        <div className="flex flex-col py-1">
+                          <span className="font-medium">Администратор организации</span>
+                          <span className="text-xs text-muted-foreground">
+                            Добавление сотрудников, управление задачами
                           </span>
                         </div>
                       </SelectItem>

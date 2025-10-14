@@ -2,22 +2,101 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCreateOrganization } from "@/hooks/useOrganization";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export const OrganizationRegistration = () => {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    // Organization data
     name: "",
     inn: "",
     contact_person: "",
     contact_email: "",
     contact_phone: "",
+    // User data
+    password: "",
+    confirmPassword: "",
   });
 
-  const createOrganization = useCreateOrganization();
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createOrganization.mutate(formData);
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Ошибка",
+        description: "Пароли не совпадают",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast({
+        title: "Ошибка",
+        description: "Пароль должен содержать минимум 6 символов",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Register user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.contact_email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: formData.contact_person,
+            phone: formData.contact_phone,
+            role: "organization_owner",
+          },
+        },
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Не удалось создать пользователя");
+
+      // 2. Create organization
+      const { data: orgData, error: orgError } = await supabase
+        .from("organizations")
+        .insert({
+          name: formData.name,
+          inn: formData.inn,
+          contact_person: formData.contact_person,
+          contact_email: formData.contact_email,
+          contact_phone: formData.contact_phone || null,
+        })
+        .select()
+        .single();
+
+      if (orgError) throw orgError;
+
+      // 3. Update employee record with organization_id
+      const { error: empError } = await supabase
+        .from("employees")
+        .update({ organization_id: orgData.id })
+        .eq("user_id", authData.user.id);
+
+      if (empError) throw empError;
+
+      toast({
+        title: "Успешная регистрация",
+        description: "Организация создана! Пробный период: 14 дней. Выполняется вход...",
+      });
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast({
+        title: "Ошибка регистрации",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -79,8 +158,32 @@ export const OrganizationRegistration = () => {
         />
       </div>
 
-      <Button type="submit" className="w-full" disabled={createOrganization.isPending}>
-        {createOrganization.isPending ? "Создание..." : "Создать организацию"}
+      <div className="space-y-2">
+        <Label htmlFor="password">Пароль</Label>
+        <Input
+          id="password"
+          type="password"
+          placeholder="Минимум 6 символов"
+          value={formData.password}
+          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="confirm-password">Подтвердите пароль</Label>
+        <Input
+          id="confirm-password"
+          type="password"
+          placeholder="Повторите пароль"
+          value={formData.confirmPassword}
+          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+          required
+        />
+      </div>
+
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Создание..." : "Создать организацию"}
       </Button>
 
       <p className="text-sm text-muted-foreground text-center">

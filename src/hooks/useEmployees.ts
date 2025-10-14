@@ -31,7 +31,7 @@ interface CreateEmployeeData {
   full_name: string;
   phone?: string;
   password: string;
-  role: "employee" | "operator" | "manager" | "client";
+  role: "employee" | "operator" | "manager" | "client" | "organization_admin";
 }
 
 export const useCreateEmployee = () => {
