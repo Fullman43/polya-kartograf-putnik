@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get user's organization_id (can be null for organization_owners without org)
+    // Get user's organization_id from their employee record
     const { data: employeeData, error: empError } = await supabaseAdmin
       .from('employees')
       .select('organization_id')
@@ -81,8 +81,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Allow organization_id to be null for organization_owners and operators without org
-    const organizationId = employeeData?.organization_id || null;
+    // Use the same organization_id as the creating user (can be null)
+    const organizationId = employeeData.organization_id;
 
     // Parse and validate request body
     const body: CreateEmployeeRequest = await req.json();

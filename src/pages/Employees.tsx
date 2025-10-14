@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 import { useEmployees } from "@/hooks/useEmployees";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, MapPin } from "lucide-react";
 
 const Employees = () => {
   const navigate = useNavigate();
@@ -54,9 +54,9 @@ const Employees = () => {
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
                     <CardTitle>{employee.full_name}</CardTitle>
-                    <CardDescription className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                       {getStatusBadge(employee.status)}
-                    </CardDescription>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
