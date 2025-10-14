@@ -192,7 +192,16 @@ async function handleCommand(message: TelegramMessage) {
 /completed - Завершенные задачи
 /status - Изменить статус
 /help - Справка
-    `);
+    `, {
+      reply_markup: {
+        keyboard: [
+          [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }],
+          [{ text: '✅ Завершенные задачи' }, { text: '📊 Мой статус' }],
+        ],
+        resize_keyboard: true,
+        persistent: true,
+      },
+    });
     return;
   }
 
@@ -253,7 +262,7 @@ async function handleCommand(message: TelegramMessage) {
     return;
   }
 
-  if (text.startsWith('/tasks')) {
+  if (text.startsWith('/tasks') || text === '📋 Мои задачи') {
     const tasks = await getUserTasks(employee.id);
     if (tasks.length === 0) {
       await sendMessage(chatId, '📋 Нет активных задач');
@@ -280,7 +289,7 @@ async function handleCommand(message: TelegramMessage) {
     return;
   }
 
-  if (text.startsWith('/active')) {
+  if (text.startsWith('/active') || text === '🟡 Активные задачи') {
     const tasks = await getUserTasks(employee.id);
     const activeTasks = tasks.filter(t => ['assigned', 'en_route', 'in_progress'].includes(t.status));
 
@@ -297,7 +306,7 @@ async function handleCommand(message: TelegramMessage) {
     return;
   }
 
-  if (text.startsWith('/completed')) {
+  if (text.startsWith('/completed') || text === '✅ Завершенные задачи') {
     const tasks = await getUserTasks(employee.id, 'completed');
     if (tasks.length === 0) {
       await sendMessage(chatId, '📋 Нет завершенных задач');
@@ -310,7 +319,7 @@ async function handleCommand(message: TelegramMessage) {
     return;
   }
 
-  if (text.startsWith('/status')) {
+  if (text.startsWith('/status') || text === '📊 Мой статус') {
     await sendMessage(chatId, `Ваш текущий статус: ${employee.status}`, {
       reply_markup: {
         inline_keyboard: [
@@ -520,9 +529,9 @@ async function handleMessage(message: TelegramMessage) {
       return;
     }
 
-    // Handle geolocation for starting work
+  // Handle geolocation for starting work
     if (botState?.waiting_for === 'start_location') {
-      const taskId = botState.state.task_id;
+      const taskId = botState.task_id;
       
       await supabase
         .from('tasks')
@@ -560,9 +569,9 @@ async function handleMessage(message: TelegramMessage) {
       return;
     }
 
-    // Handle geolocation for completing work
+  // Handle geolocation for completing work
     if (botState?.waiting_for === 'completion_location') {
-      const taskId = botState.state.task_id;
+      const taskId = botState.task_id;
       
       await supabase
         .from('tasks')
