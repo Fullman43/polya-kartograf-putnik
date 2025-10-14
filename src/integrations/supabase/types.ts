@@ -61,6 +61,21 @@ export type Database = {
           },
         ]
       }
+      order_number_sequences: {
+        Row: {
+          date_key: string
+          last_number: number
+        }
+        Insert: {
+          date_key: string
+          last_number?: number
+        }
+        Update: {
+          date_key?: string
+          last_number?: number
+        }
+        Relationships: []
+      }
       organizations: {
         Row: {
           contact_email: string
