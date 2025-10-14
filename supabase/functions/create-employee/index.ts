@@ -10,7 +10,7 @@ interface CreateEmployeeRequest {
   full_name: string;
   phone?: string;
   password: string;
-  role: 'employee' | 'operator';
+  role: 'employee' | 'operator' | 'organization_admin';
 }
 
 Deno.serve(async (req) => {
@@ -50,19 +50,34 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user has operator role
+    // Check if user has operator, organization_owner, or organization_admin role
     const { data: roleData, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'operator')
+      .in('role', ['operator', 'organization_owner', 'organization_admin'])
       .single();
 
     if (roleError || !roleData) {
       console.error('Role check error:', roleError);
       return new Response(
-        JSON.stringify({ error: 'Доступ запрещен. Требуется роль оператора' }),
+        JSON.stringify({ error: 'Доступ запрещен. Требуется роль оператора, владельца или администратора организации' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get user's organization_id
+    const { data: employeeData, error: empError } = await supabaseAdmin
+      .from('employees')
+      .select('organization_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (empError || !employeeData?.organization_id) {
+      console.error('Organization check error:', empError);
+      return new Response(
+        JSON.stringify({ error: 'Организация не найдена' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -84,7 +99,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    if (!['employee', 'operator'].includes(role)) {
+    if (!['employee', 'operator', 'organization_admin'].includes(role)) {
       return new Response(
         JSON.stringify({ error: 'Некорректная роль' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -102,6 +117,7 @@ Deno.serve(async (req) => {
         full_name,
         phone: phone || null,
         role,
+        organization_id: employeeData.organization_id,
       },
     });
 

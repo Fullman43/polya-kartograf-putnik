@@ -21,6 +21,7 @@ export type Database = {
           current_task_id: string | null
           full_name: string
           id: string
+          organization_id: string | null
           phone: string | null
           status: Database["public"]["Enums"]["employee_status"]
           user_id: string
@@ -31,6 +32,7 @@ export type Database = {
           current_task_id?: string | null
           full_name: string
           id?: string
+          organization_id?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["employee_status"]
           user_id: string
@@ -41,9 +43,57 @@ export type Database = {
           current_task_id?: string | null
           full_name?: string
           id?: string
+          organization_id?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["employee_status"]
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employees_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          contact_email: string
+          contact_person: string
+          contact_phone: string | null
+          created_at: string | null
+          id: string
+          inn: string
+          name: string
+          subscription_status: string | null
+          trial_ends_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contact_email: string
+          contact_person: string
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          inn: string
+          name: string
+          subscription_status?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contact_email?: string
+          contact_person?: string
+          contact_phone?: string | null
+          created_at?: string | null
+          id?: string
+          inn?: string
+          name?: string
+          subscription_status?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -194,6 +244,7 @@ export type Database = {
           id: string
           location: unknown | null
           order_number: string | null
+          organization_id: string | null
           priority: Database["public"]["Enums"]["task_priority"]
           scheduled_time: string
           started_at: string | null
@@ -214,6 +265,7 @@ export type Database = {
           id?: string
           location?: unknown | null
           order_number?: string | null
+          organization_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           scheduled_time: string
           started_at?: string | null
@@ -234,6 +286,7 @@ export type Database = {
           id?: string
           location?: unknown | null
           order_number?: string | null
+          organization_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           scheduled_time?: string
           started_at?: string | null
@@ -247,6 +300,13 @@ export type Database = {
             columns: ["assigned_employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -351,6 +411,10 @@ export type Database = {
     Functions: {
       generate_order_number: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_organization_id: {
+        Args: { _user_id: string }
         Returns: string
       }
       has_role: {

@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { User, Session } from "@supabase/supabase-js";
+import { OrganizationRegistration } from "@/components/auth/OrganizationRegistration";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const Auth = () => {
   const [signupPassword, setSignupPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<"operator" | "employee">("employee");
+  const [role, setRole] = useState<"operator" | "employee" | "organization_owner">("employee");
 
   useEffect(() => {
     // Set up auth state listener first
@@ -134,9 +135,10 @@ const Auth = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="login">Вход</TabsTrigger>
               <TabsTrigger value="signup">Регистрация</TabsTrigger>
+              <TabsTrigger value="organization">Организация</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -204,13 +206,14 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-role">Роль</Label>
-                  <Select value={role} onValueChange={(value: "operator" | "employee") => setRole(value)}>
+                  <Select value={role} onValueChange={(value: "operator" | "employee" | "organization_owner") => setRole(value)}>
                     <SelectTrigger id="signup-role">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="employee">Сотрудник</SelectItem>
                       <SelectItem value="operator">Оператор</SelectItem>
+                      <SelectItem value="organization_owner">Владелец организации</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -228,6 +231,16 @@ const Auth = () => {
                   {loading ? "Регистрация..." : "Зарегистрироваться"}
                 </Button>
               </form>
+            </TabsContent>
+
+            <TabsContent value="organization">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Зарегистрируйте свою организацию, чтобы начать использовать сервис. 
+                  Пробный период - 14 дней.
+                </p>
+                <OrganizationRegistration />
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
