@@ -27,6 +27,7 @@ interface TelegramMessage {
   location?: {
     latitude: number;
     longitude: number;
+    live_period?: number;
   };
 }
 
@@ -378,29 +379,55 @@ async function handleCallbackQuery(callbackQuery: any) {
 
   if (data.startsWith('start_')) {
     const taskId = data.replace('start_', '');
-    await supabase
-      .from('tasks')
-      .update({
-        status: 'in_progress',
-        started_at: new Date().toISOString(),
-      })
-      .eq('id', taskId);
+    
+    // Require geolocation before starting work
+    await supabase.from('telegram_bot_state').upsert({
+      telegram_id: telegramId,
+      state: { 
+        waiting_for: 'start_location', 
+        task_id: taskId 
+      },
+      updated_at: new Date().toISOString(),
+    });
 
-    await sendMessage(chatId, '✅ Статус обновлен: Выполняется');
+    await sendMessage(chatId, 
+      '📍 Для начала работы необходимо подтвердить вашу геолокацию.\n\n' +
+      'Нажмите кнопку ниже и отправьте вашу текущую геолокацию.',
+      {
+        reply_markup: {
+          keyboard: [[{ text: '📍 Подтвердить местоположение', request_location: true }]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }
+    );
     return;
   }
 
   if (data.startsWith('complete_')) {
     const taskId = data.replace('complete_', '');
-    await supabase
-      .from('tasks')
-      .update({
-        status: 'completed',
-        completed_at: new Date().toISOString(),
-      })
-      .eq('id', taskId);
+    
+    // Require geolocation before completing work
+    await supabase.from('telegram_bot_state').upsert({
+      telegram_id: telegramId,
+      state: { 
+        waiting_for: 'completion_location', 
+        task_id: taskId 
+      },
+      updated_at: new Date().toISOString(),
+    });
 
-    await sendMessage(chatId, '✅ Задача завершена!');
+    await sendMessage(chatId, 
+      '📍 Для завершения работы необходимо подтвердить вашу геолокацию.\n\n' +
+      'Нажмите кнопку ниже и отправьте вашу текущую геолокацию с места выполнения работ.',
+      {
+        reply_markup: {
+          keyboard: [[{ text: '📍 Подтвердить завершение', request_location: true }]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }
+    );
     return;
   }
 
@@ -483,26 +510,115 @@ async function handleMessage(message: TelegramMessage) {
   const botState = state.state as any;
 
   // Handle location
-  if (message.location && botState.waiting_for === 'location') {
+  if (message.location) {
     const user = await getUserByTelegramId(telegramId);
     if (!user) return;
 
     const employee = await getEmployeeByUserId(user.user_id);
-    if (!employee) return;
+    if (!employee) {
+      await sendMessage(chatId, '❌ Вы не зарегистрированы как сотрудник');
+      return;
+    }
 
+    // Handle geolocation for starting work
+    if (botState?.waiting_for === 'start_location') {
+      const taskId = botState.state.task_id;
+      
+      await supabase
+        .from('tasks')
+        .update({
+          status: 'in_progress',
+          started_at: new Date().toISOString(),
+          start_location: `(${message.location.latitude},${message.location.longitude})`,
+        })
+        .eq('id', taskId);
+
+      await supabase
+        .from('employees')
+        .update({
+          current_location: `(${message.location.latitude},${message.location.longitude})`,
+          location_updated_at: new Date().toISOString(),
+        })
+        .eq('id', employee.id);
+
+      await supabase
+        .from('telegram_bot_state')
+        .delete()
+        .eq('telegram_id', telegramId);
+
+      await sendMessage(chatId, 
+        '✅ Геолокация подтверждена!\n\n' +
+        '🚀 Статус обновлен: Выполняется\n\n' +
+        'Для автоматического отслеживания можете включить Live Location (живую геолокацию).',
+        {
+          reply_markup: {
+            keyboard: [[{ text: '📍 Включить отслеживание', request_location: true }]],
+            resize_keyboard: true,
+          },
+        }
+      );
+      return;
+    }
+
+    // Handle geolocation for completing work
+    if (botState?.waiting_for === 'completion_location') {
+      const taskId = botState.state.task_id;
+      
+      await supabase
+        .from('tasks')
+        .update({
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          completion_location: `(${message.location.latitude},${message.location.longitude})`,
+        })
+        .eq('id', taskId);
+
+      await supabase
+        .from('employees')
+        .update({
+          current_location: `(${message.location.latitude},${message.location.longitude})`,
+          location_updated_at: new Date().toISOString(),
+        })
+        .eq('id', employee.id);
+
+      await supabase
+        .from('telegram_bot_state')
+        .delete()
+        .eq('telegram_id', telegramId);
+
+      await sendMessage(chatId, 
+        '✅ Работа завершена!\n\n' +
+        '📍 Геолокация завершения сохранена\n' +
+        '⏱️ Время работы будет рассчитано автоматически\n\n' +
+        'Спасибо за работу! 👍'
+      );
+      return;
+    }
+
+    // Handle regular geolocation (Live Location and manual sharing)
     await supabase
       .from('employees')
       .update({
         current_location: `(${message.location.latitude},${message.location.longitude})`,
+        location_updated_at: new Date().toISOString(),
       })
       .eq('id', employee.id);
 
-    await supabase
-      .from('telegram_bot_state')
-      .delete()
-      .eq('telegram_id', telegramId);
+    if (message.location.live_period) {
+      await sendMessage(chatId, 
+        `✅ Отслеживание активировано!\n\n` +
+        `📍 Ваша геолокация будет обновляться автоматически в течение ${Math.floor(message.location.live_period / 60)} минут.`
+      );
+    } else if (botState?.waiting_for === 'location') {
+      // Clear old location state
+      await supabase
+        .from('telegram_bot_state')
+        .delete()
+        .eq('telegram_id', telegramId);
+      
+      await sendMessage(chatId, '📍 Геолокация обновлена');
+    }
 
-    await sendMessage(chatId, '✅ Геолокация обновлена');
     return;
   }
 

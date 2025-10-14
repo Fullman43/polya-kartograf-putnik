@@ -21,6 +21,7 @@ export type Database = {
           current_task_id: string | null
           full_name: string
           id: string
+          location_updated_at: string | null
           organization_id: string | null
           phone: string | null
           status: Database["public"]["Enums"]["employee_status"]
@@ -32,6 +33,7 @@ export type Database = {
           current_task_id?: string | null
           full_name: string
           id?: string
+          location_updated_at?: string | null
           organization_id?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["employee_status"]
@@ -43,6 +45,7 @@ export type Database = {
           current_task_id?: string | null
           full_name?: string
           id?: string
+          location_updated_at?: string | null
           organization_id?: string | null
           phone?: string | null
           status?: Database["public"]["Enums"]["employee_status"]
@@ -235,6 +238,7 @@ export type Database = {
           address: string
           assigned_employee_id: string | null
           completed_at: string | null
+          completion_location: unknown | null
           created_at: string
           created_by: string
           customer_name: string | null
@@ -247,6 +251,7 @@ export type Database = {
           organization_id: string | null
           priority: Database["public"]["Enums"]["task_priority"]
           scheduled_time: string
+          start_location: unknown | null
           started_at: string | null
           status: Database["public"]["Enums"]["task_status"]
           updated_at: string
@@ -256,6 +261,7 @@ export type Database = {
           address: string
           assigned_employee_id?: string | null
           completed_at?: string | null
+          completion_location?: unknown | null
           created_at?: string
           created_by: string
           customer_name?: string | null
@@ -268,6 +274,7 @@ export type Database = {
           organization_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           scheduled_time: string
+          start_location?: unknown | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           updated_at?: string
@@ -277,6 +284,7 @@ export type Database = {
           address?: string
           assigned_employee_id?: string | null
           completed_at?: string | null
+          completion_location?: unknown | null
           created_at?: string
           created_by?: string
           customer_name?: string | null
@@ -289,6 +297,7 @@ export type Database = {
           organization_id?: string | null
           priority?: Database["public"]["Enums"]["task_priority"]
           scheduled_time?: string
+          start_location?: unknown | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           updated_at?: string
