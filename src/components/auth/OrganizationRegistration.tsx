@@ -60,17 +60,7 @@ export const OrganizationRegistration = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Не удалось создать пользователя");
 
-      // 2. Create user role as organization_owner
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: authData.user.id,
-          role: "organization_owner",
-        });
-
-      if (roleError) throw roleError;
-
-      // 3. Create organization
+      // 2. Create organization
       const { data: orgData, error: orgError } = await supabase
         .from("organizations")
         .insert({
@@ -85,7 +75,7 @@ export const OrganizationRegistration = () => {
 
       if (orgError) throw orgError;
 
-      // 4. Update employee record with organization_id
+      // 3. Update employee record with organization_id
       const { error: empError } = await supabase
         .from("employees")
         .update({ organization_id: orgData.id })
