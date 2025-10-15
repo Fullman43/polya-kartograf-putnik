@@ -1,16 +1,29 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
-import { useEmployees } from "@/hooks/useEmployees";
+import { useEmployees, useDeleteEmployee } from "@/hooks/useEmployees";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Phone, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Phone, MapPin, Trash2 } from "lucide-react";
 
 const Employees = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const { data: employees } = useEmployees();
+  const deleteEmployee = useDeleteEmployee();
+  const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -39,6 +52,13 @@ const Employees = () => {
     }
   };
 
+  const handleDeleteEmployee = () => {
+    if (employeeToDelete) {
+      deleteEmployee.mutate(employeeToDelete);
+      setEmployeeToDelete(null);
+    }
+  };
+
   return (
     <Layout>
       <div className="container mx-auto p-6 space-y-6">
@@ -58,6 +78,14 @@ const Employees = () => {
                       {getStatusBadge(employee.status)}
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setEmployeeToDelete(employee.id)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -92,6 +120,26 @@ const Employees = () => {
           )}
         </div>
       </div>
+
+      <AlertDialog open={!!employeeToDelete} onOpenChange={() => setEmployeeToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить сотрудника?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Сотрудник будет окончательно удален из системы.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteEmployee}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 };

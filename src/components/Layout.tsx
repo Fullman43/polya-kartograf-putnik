@@ -15,6 +15,7 @@ import EmployeeListReal from "@/components/dashboard/EmployeeListReal";
 import { CreateTaskDialog } from "@/components/dashboard/CreateTaskDialog";
 import { CreateEmployeeDialog } from "@/components/dashboard/CreateEmployeeDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/hooks/useOrganization";
 
 interface LayoutProps {
   children: ReactNode;
@@ -25,6 +26,7 @@ const Layout = ({ children }: LayoutProps) => {
   const [showCreateEmployee, setShowCreateEmployee] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { data: organization } = useOrganization();
 
   return (
     <div className="flex h-screen bg-background">
@@ -34,9 +36,11 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-2xl font-bold text-sidebar-foreground mb-1">
-                Контроль персонала
+                {organization?.name || "Контроль персонала"}
               </h1>
-              <p className="text-sm text-sidebar-foreground/70">Панель оператора</p>
+              <p className="text-sm text-sidebar-foreground/70">
+                {organization ? "Панель управления" : "Панель оператора"}
+              </p>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
