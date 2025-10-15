@@ -735,7 +735,16 @@ serve(async (req) => {
     console.log('Received update:', JSON.stringify(update));
 
     if (update.message) {
-      if (update.message.text?.startsWith('/')) {
+      const text = update.message.text || '';
+      const isCommand = text.startsWith('/');
+      const isReplyKeyboard = [
+        '📋 Мои задачи',
+        '🟡 Активные задачи',
+        '✅ Завершенные задачи',
+        '📊 Мой статус'
+      ].includes(text);
+
+      if (isCommand || isReplyKeyboard) {
         await handleCommand(update.message);
       } else {
         await handleMessage(update.message);
