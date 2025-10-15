@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { MapPin, CheckSquare, BarChart3, Send } from "lucide-react";
 import logo from "@/assets/fieldcontrol-logo.png";
+import heroImage from "@/assets/hero-dashboard.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -27,8 +28,6 @@ const Index = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-8">
-            <a href="#product" className="text-foreground/80 hover:text-foreground transition-colors">Продукт</a>
-            <a href="#features" className="text-foreground/80 hover:text-foreground transition-colors">Возможности</a>
             <a href="#pricing" className="text-foreground/80 hover:text-foreground transition-colors">Тарифы</a>
           </div>
 
@@ -51,17 +50,23 @@ const Index = () => {
               Отслеживайте сотрудников в реальном времени, управляйте задачами и повышайте продуктивность с помощью умной системы GPS-мониторинга.
             </p>
 
-            <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8">
+            <Button 
+              size="lg" 
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-8"
+              onClick={() => navigate("/auth")}
+            >
               Попробовать бесплатно
             </Button>
           </div>
 
-          {/* Right Visual - Placeholder for screens */}
+          {/* Right Visual - Hero Image */}
           <div className="hidden lg:flex justify-center items-center">
             <div className="relative">
-              <div className="w-96 h-64 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-2xl flex items-center justify-center">
-                <MapPin className="h-24 w-24 text-white opacity-20" />
-              </div>
+              <img 
+                src={heroImage} 
+                alt="Dashboard и мобильное приложение с GPS-мониторингом" 
+                className="w-full max-w-xl rounded-2xl shadow-2xl"
+              />
             </div>
           </div>
         </div>
