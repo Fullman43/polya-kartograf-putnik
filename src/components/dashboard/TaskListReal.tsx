@@ -3,10 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock } from "lucide-react";
 import { useTasks } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useMapContext } from "@/contexts/MapContext";
 
 const TaskListReal = () => {
   const { data: tasks, isLoading } = useTasks();
   const { data: employees } = useEmployees();
+  const { focusOnTask } = useMapContext();
 
   // Translation function for work types
   const translateWorkType = (workType: string): string => {
@@ -97,6 +99,7 @@ const TaskListReal = () => {
         {activeTasks.map((task) => (
           <div
             key={task.id}
+            onClick={() => focusOnTask(task.id)}
             className="p-3 bg-sidebar-accent rounded-lg cursor-pointer hover:bg-sidebar-accent/80 transition-colors"
           >
             <div className="flex items-start justify-between mb-2">

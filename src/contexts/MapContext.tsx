@@ -2,6 +2,7 @@ import { createContext, useContext, ReactNode } from 'react';
 
 interface MapContextType {
   focusOnEmployee: (employeeId: string) => void;
+  focusOnTask: (taskId: string) => void;
 }
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
@@ -11,6 +12,7 @@ export const useMapContext = () => {
   if (!context) {
     return {
       focusOnEmployee: () => {}, // Fallback for when context is not available
+      focusOnTask: () => {}, // Fallback for when context is not available
     };
   }
   return context;

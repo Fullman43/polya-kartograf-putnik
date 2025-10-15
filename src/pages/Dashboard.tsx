@@ -9,6 +9,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [focusOnEmployeeFn, setFocusOnEmployeeFn] = useState<((employeeId: string) => void) | null>(null);
+  const [focusOnTaskFn, setFocusOnTaskFn] = useState<((taskId: string) => void) | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -25,9 +26,15 @@ const Dashboard = () => {
   }
 
   return (
-    <MapProvider value={{ focusOnEmployee: focusOnEmployeeFn || (() => {}) }}>
+    <MapProvider value={{ 
+      focusOnEmployee: focusOnEmployeeFn || (() => {}),
+      focusOnTask: focusOnTaskFn || (() => {})
+    }}>
       <Layout>
-        <MapView onMapReady={(fn) => setFocusOnEmployeeFn(() => fn)} />
+        <MapView onMapReady={(employeeFn, taskFn) => {
+          setFocusOnEmployeeFn(() => employeeFn);
+          setFocusOnTaskFn(() => taskFn);
+        }} />
       </Layout>
     </MapProvider>
   );

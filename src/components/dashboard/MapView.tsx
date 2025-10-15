@@ -17,7 +17,7 @@ declare global {
 }
 
 interface MapViewProps {
-  onMapReady?: (focusOnEmployee: (employeeId: string) => void) => void;
+  onMapReady?: (focusOnEmployee: (employeeId: string) => void, focusOnTask: (taskId: string) => void) => void;
 }
 
 const MapView = ({ onMapReady }: MapViewProps) => {
@@ -25,6 +25,7 @@ const MapView = ({ onMapReady }: MapViewProps) => {
   const mapInstance = useRef<any>(null);
   const routeLinesRef = useRef<any[]>([]);
   const employeePlacemarksRef = useRef<Map<string, any>>(new Map());
+  const taskPlacemarksRef = useRef<Map<string, any>>(new Map());
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string; eta: string } | null>(null);
@@ -143,6 +144,18 @@ const MapView = ({ onMapReady }: MapViewProps) => {
     }
   };
 
+  const focusOnTask = (taskId: string) => {
+    const placemark = taskPlacemarksRef.current.get(taskId);
+    if (placemark && mapInstance.current) {
+      // Open the balloon
+      placemark.balloon.open();
+      // Center map on task
+      mapInstance.current.setCenter(placemark.geometry.getCoordinates(), 15, {
+        duration: 300,
+      });
+    }
+  };
+
   const handleGeocodeExistingTasks = async () => {
     setIsGeocodingTasks(true);
     
@@ -181,8 +194,9 @@ const MapView = ({ onMapReady }: MapViewProps) => {
 
           mapInstance.current = map;
 
-          // Clear previous employee placemarks
+          // Clear previous placemarks
           employeePlacemarksRef.current.clear();
+          taskPlacemarksRef.current.clear();
 
           // Add employee markers
           employeesWithLocation.forEach((employee) => {
@@ -240,11 +254,12 @@ const MapView = ({ onMapReady }: MapViewProps) => {
             );
 
             map.geoObjects.add(placemark);
+            taskPlacemarksRef.current.set(task.id, placemark);
           });
 
           // Notify parent that map is ready
           if (onMapReady) {
-            onMapReady(focusOnEmployee);
+            onMapReady(focusOnEmployee, focusOnTask);
           }
         });
       }
