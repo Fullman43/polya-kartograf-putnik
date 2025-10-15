@@ -208,17 +208,47 @@ const MapView = ({ onMapReady }: MapViewProps) => {
               employee.status === "busy" ? "#f59e0b" : 
               "#94a3b8";
 
+            // Calculate time since last location update
+            const lastUpdate = (employee as any).location_updated_at ? new Date((employee as any).location_updated_at) : null;
+            const now = new Date();
+            const minutesAgo = lastUpdate ? Math.floor((now.getTime() - lastUpdate.getTime()) / 60000) : null;
+            
+            let locationTimeText = '';
+            if (minutesAgo !== null) {
+              if (minutesAgo < 1) {
+                locationTimeText = 'только что';
+              } else if (minutesAgo < 60) {
+                locationTimeText = `${minutesAgo} мин. назад`;
+              } else {
+                const hoursAgo = Math.floor(minutesAgo / 60);
+                locationTimeText = `${hoursAgo} ч. назад`;
+              }
+            }
+
             const placemark = new window.ymaps.Placemark(
               [coords.lat, coords.lng],
               {
                 balloonContent: `
-                  <div style="padding: 8px;">
-                    <strong>${employee.full_name}</strong><br/>
-                    <span>${
-                      employee.status === "available" ? "Доступен" :
-                      employee.status === "busy" ? "Занят" :
-                      "Оффлайн"
-                    }</span>
+                  <div style="padding: 10px; min-width: 200px;">
+                    <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333;">${employee.full_name || 'Сотрудник'}</h3>
+                    <div style="display: flex; align-items: center; margin-bottom: 6px;">
+                      <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; background: ${iconColor};"></span>
+                      <span style="font-size: 14px; color: #666;">
+                        ${employee.status === "available" ? "Доступен" :
+                          employee.status === "busy" ? "Занят" :
+                          "Оффлайн"}
+                      </span>
+                    </div>
+                    ${locationTimeText ? `
+                      <div style="font-size: 13px; color: #999; margin-top: 4px;">
+                        📍 Геометка: ${locationTimeText}
+                      </div>
+                    ` : ''}
+                    ${(employee as any).phone ? `
+                      <div style="font-size: 14px; color: #666; margin-top: 6px;">
+                        📱 <a href="tel:${(employee as any).phone}" style="color: #3b82f6; text-decoration: none;">${(employee as any).phone}</a>
+                      </div>
+                    ` : ''}
                   </div>
                 `,
               },

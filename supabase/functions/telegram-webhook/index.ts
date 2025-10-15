@@ -409,6 +409,17 @@ async function handleCallbackQuery(callbackQuery: any) {
   // Handle task status updates
   if (data.startsWith('enroute_')) {
     const taskId = data.replace('enroute_', '');
+    
+    // Set state to wait for location
+    await supabase.from('telegram_bot_state').upsert({
+      telegram_id: telegramId,
+      state: { 
+        waiting_for: 'enroute_location', 
+        task_id: taskId 
+      },
+      updated_at: new Date().toISOString(),
+    });
+
     await supabase
       .from('tasks')
       .update({
@@ -417,13 +428,21 @@ async function handleCallbackQuery(callbackQuery: any) {
       })
       .eq('id', taskId);
 
-    await sendMessage(chatId, '✅ Статус обновлен: В пути\n\nОтправьте геолокацию, если необходимо', {
-      reply_markup: {
-        keyboard: [[{ text: '📍 Отправить геолокацию', request_location: true }]],
-        resize_keyboard: true,
-        one_time_keyboard: true,
-      },
-    });
+    await sendMessage(chatId, 
+      '✅ Статус обновлен: В пути\n\n' +
+      '📍 Пожалуйста, подтвердите вашу геолокацию.\n\n' +
+      'Нажмите кнопку ниже и отправьте вашу текущую геолокацию.',
+      {
+        reply_markup: {
+          keyboard: [
+            [{ text: '📍 Подтвердить местоположение', request_location: true }],
+            [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }]
+          ],
+          resize_keyboard: true,
+          one_time_keyboard: false,
+        },
+      }
+    );
     return;
   }
 
@@ -573,6 +592,45 @@ async function handleMessage(message: TelegramMessage) {
     const employee = await getEmployeeByUserId(user.user_id);
     if (!employee) {
       await sendMessage(chatId, '❌ Вы не зарегистрированы как сотрудник');
+      return;
+    }
+
+  // Handle geolocation for en route
+    if (botState?.waiting_for === 'enroute_location') {
+      const taskId = botState.task_id;
+      
+      console.log('En route - location:', message.location);
+      
+      const { data: empUpdate, error: empError } = await supabase
+        .from('employees')
+        .update({
+          current_location: `(${message.location.latitude},${message.location.longitude})`,
+          location_updated_at: new Date().toISOString(),
+        })
+        .eq('id', employee.id)
+        .select();
+
+      console.log('Employee location update (enroute):', { empUpdate, empError });
+
+      await supabase
+        .from('telegram_bot_state')
+        .delete()
+        .eq('telegram_id', telegramId);
+
+      await sendMessage(chatId, 
+        '✅ Геолокация подтверждена!\n\n' +
+        '🚗 Статус: В пути\n\n' +
+        'Для автоматического отслеживания можете включить Live Location (живую геолокацию).',
+        {
+          reply_markup: {
+            keyboard: [
+              [{ text: '📍 Включить отслеживание', request_location: true }],
+              [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }]
+            ],
+            resize_keyboard: true,
+          },
+        }
+      );
       return;
     }
 
