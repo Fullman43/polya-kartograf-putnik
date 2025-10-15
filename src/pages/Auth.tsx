@@ -131,7 +131,8 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <div className="w-full max-w-md space-y-4">
+        <Card className="w-full">
         <CardHeader>
           <CardTitle className="text-2xl">Контроль персонала</CardTitle>
           <CardDescription>
@@ -250,6 +251,14 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
+      <Button 
+        onClick={() => navigate("/")} 
+        variant="outline" 
+        className="w-full bg-background"
+      >
+        Вернуться на главную
+      </Button>
+      </div>
     </div>
   );
 };

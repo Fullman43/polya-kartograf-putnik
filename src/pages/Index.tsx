@@ -28,12 +28,13 @@ const Index = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-8">
-            <a href="#pricing" className="text-foreground/80 hover:text-foreground transition-colors font-semibold">Тарифы</a>
+            <Button onClick={() => navigate("/subscription")} variant="ghost" className="font-semibold">
+              Тарифы
+            </Button>
+            <Button onClick={() => navigate("/auth")} variant="outline" className="bg-white">
+              Войти
+            </Button>
           </div>
-
-          <Button onClick={() => navigate("/auth")} variant="outline" className="bg-white">
-            Войти
-          </Button>
         </nav>
       </header>
 
