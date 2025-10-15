@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
-import { MapPin, Users, BarChart3, Clock } from "lucide-react";
+import { MapPin, CheckSquare, BarChart3, Send } from "lucide-react";
+import logo from "@/assets/fieldcontrol-logo.png";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -16,57 +17,95 @@ const Index = () => {
   }, [user, loading, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20">
-        <div className="text-center max-w-4xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
-            <MapPin className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Контроль выездных сотрудников</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
+      {/* Header */}
+      <header className="container mx-auto px-4 py-6">
+        <nav className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="FieldControl.ru" className="h-12 w-12" />
+            <span className="text-xl font-semibold">FieldControl.ru</span>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-8">
+            <a href="#product" className="text-foreground/80 hover:text-foreground transition-colors">Продукт</a>
+            <a href="#features" className="text-foreground/80 hover:text-foreground transition-colors">Возможности</a>
+            <a href="#pricing" className="text-foreground/80 hover:text-foreground transition-colors">Тарифы</a>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-primary bg-clip-text text-transparent">
-            Управление и мониторинг полевого персонала
-          </h1>
+          <Button onClick={() => navigate("/auth")} variant="outline" className="bg-white">
+            Войти
+          </Button>
+        </nav>
+      </header>
 
-          <p className="text-xl text-muted-foreground mb-8">
-            Отслеживайте местоположение сотрудников, управляйте задачами и оптимизируйте логистику в режиме реального
-            времени
-          </p>
+      {/* Hero Section */}
+      <div className="container mx-auto px-4 py-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Content */}
+          <div>
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+              Полный контроль и эффективность вашей выездной команды
+            </h1>
 
-          <div className="flex gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate("/auth")}>
-              Войти в систему
+            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+              Отслеживайте сотрудников в реальном времени, управляйте задачами и повышайте продуктивность с помощью умной системы GPS-мониторинга.
+            </p>
+
+            <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8">
+              Попробовать бесплатно
             </Button>
+          </div>
+
+          {/* Right Visual - Placeholder for screens */}
+          <div className="hidden lg:flex justify-center items-center">
+            <div className="relative">
+              <div className="w-96 h-64 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-2xl flex items-center justify-center">
+                <MapPin className="h-24 w-24 text-white opacity-20" />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          <Card className="p-6 shadow-card hover:shadow-lg transition-shadow">
-            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-              <MapPin className="h-6 w-6 text-primary" />
+        <div id="features" className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
+          <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <div className="h-14 w-14 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+              <MapPin className="h-7 w-7 text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Карта в реальном времени</h3>
-            <p className="text-muted-foreground">
-              Видите всех сотрудников и задачи на интерактивной карте с маршрутами и ETA
+            <h3 className="text-lg font-semibold mb-2">Карта онлайн</h3>
+            <p className="text-muted-foreground text-sm">
+              Визуализируйте сотрудников на маршрутной онлайн карте с ETA и маршрутами
             </p>
           </Card>
 
-          <Card className="p-6 shadow-card hover:shadow-lg transition-shadow">
-            <div className="h-12 w-12 rounded-lg bg-success/10 flex items-center justify-center mb-4">
-              <Clock className="h-6 w-6 text-success" />
+          <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <div className="h-14 w-14 rounded-xl bg-indigo-100 flex items-center justify-center mb-4">
+              <CheckSquare className="h-7 w-7 text-indigo-600" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Отслеживание статусов</h3>
-            <p className="text-muted-foreground">Контроль прогресса работы с GPS-метками и временными штампами</p>
+            <h3 className="text-lg font-semibold mb-2">Контроль задач</h3>
+            <p className="text-muted-foreground text-sm">
+              Следите за выполнением задач, статусами и геопозицией
+            </p>
           </Card>
 
-          <Card className="p-6 shadow-card hover:shadow-lg transition-shadow">
-            <div className="h-12 w-12 rounded-lg bg-warning/10 flex items-center justify-center mb-4">
-              <BarChart3 className="h-6 w-6 text-warning" />
+          <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <div className="h-14 w-14 rounded-xl bg-purple-100 flex items-center justify-center mb-4">
+              <BarChart3 className="h-7 w-7 text-purple-600" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Аналитика и отчёты</h3>
-            <p className="text-muted-foreground">Детальная статистика по времени, маршрутам и эффективности команды</p>
+            <h3 className="text-lg font-semibold mb-2">Отчёты и аналитика</h3>
+            <p className="text-muted-foreground text-sm">
+              Получайте детальные отчеты о-времени, маршру, XPI и KPI
+            </p>
+          </Card>
+
+          <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <div className="h-14 w-14 rounded-xl bg-cyan-100 flex items-center justify-center mb-4">
+              <Send className="h-7 w-7 text-cyan-600" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Интеграция с Telegram</h3>
+            <p className="text-muted-foreground text-sm">
+              Мгновенные оповещения и отчеты прямо в Telegram
+            </p>
           </Card>
         </div>
 
@@ -79,7 +118,7 @@ const Index = () => {
             { value: "24/7", label: "Поддержка" },
           ].map((stat, idx) => (
             <div key={idx} className="text-center">
-              <div className="text-3xl font-bold text-primary mb-1">{stat.value}</div>
+              <div className="text-4xl font-bold text-primary mb-1">{stat.value}</div>
               <div className="text-sm text-muted-foreground">{stat.label}</div>
             </div>
           ))}
