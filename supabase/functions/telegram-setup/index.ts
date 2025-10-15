@@ -9,6 +9,18 @@ serve(async (req) => {
 
     console.log('Setting webhook to:', webhookUrl);
 
+    // First, delete existing webhook to ensure clean setup
+    await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/deleteWebhook`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    console.log('Deleted existing webhook');
+
+    // Set new webhook with all required updates
     const response = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`,
       {
@@ -17,6 +29,7 @@ serve(async (req) => {
         body: JSON.stringify({
           url: webhookUrl,
           allowed_updates: ['message', 'callback_query'],
+          drop_pending_updates: true,
         }),
       }
     );
