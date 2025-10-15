@@ -27,11 +27,13 @@ export const useOrganization = () => {
   return useQuery({
     queryKey: ["organization"],
     queryFn: async () => {
+      console.log("useOrganization - fetching...");
       const { data, error } = await supabase
         .from("organizations")
         .select("*")
         .maybeSingle();
 
+      console.log("useOrganization - result:", { data, error });
       if (error) throw error;
       return data as Organization | null;
     },

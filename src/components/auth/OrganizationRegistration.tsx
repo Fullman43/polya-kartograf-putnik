@@ -60,6 +60,9 @@ export const OrganizationRegistration = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Не удалось создать пользователя");
 
+      // Wait a bit for the trigger to create the employee record
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // 2. Create organization
       const { data: orgData, error: orgError } = await supabase
         .from("organizations")
@@ -73,7 +76,10 @@ export const OrganizationRegistration = () => {
         .select()
         .single();
 
-      if (orgError) throw orgError;
+      if (orgError) {
+        console.error("Organization creation error:", orgError);
+        throw new Error(`Не удалось создать организацию: ${orgError.message}`);
+      }
 
       // 3. Update employee record with organization_id
       const { error: empError } = await supabase
@@ -81,12 +87,22 @@ export const OrganizationRegistration = () => {
         .update({ organization_id: orgData.id })
         .eq("user_id", authData.user.id);
 
-      if (empError) throw empError;
+      if (empError) {
+        console.error("Employee update error:", empError);
+        throw new Error(`Не удалось связать сотрудника с организацией: ${empError.message}`);
+      }
+
+      console.log("Registration successful! Organization:", orgData);
 
       toast({
         title: "Успешная регистрация",
         description: "Организация создана! Пробный период: 14 дней. Выполняется вход...",
       });
+
+      // Reload the page after successful registration to refresh all data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error: any) {
       console.error("Registration error:", error);
       toast({

@@ -26,7 +26,9 @@ const Layout = ({ children }: LayoutProps) => {
   const [showCreateEmployee, setShowCreateEmployee] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { data: organization } = useOrganization();
+  const { data: organization, isLoading: orgLoading, error: orgError } = useOrganization();
+
+  console.log("Layout - Organization data:", { organization, orgLoading, orgError });
 
   return (
     <div className="flex h-screen bg-background">
