@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Tasks from "./pages/Tasks";
 import Employees from "./pages/Employees";
 import Reports from "./pages/Reports";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/employees" element={<Employees />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/subscription" element={<Subscription />} />
           <Route path="/employee" element={<Employee />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

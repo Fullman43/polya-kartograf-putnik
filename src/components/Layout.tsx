@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Filter, Users, MapPin, LogOut, LayoutDashboard, ClipboardList, UserCircle, FileText, UserPlus } from "lucide-react";
+import { Plus, Filter, Users, MapPin, LogOut, LayoutDashboard, ClipboardList, UserCircle, FileText, UserPlus, CreditCard } from "lucide-react";
 import TaskListReal from "@/components/dashboard/TaskListReal";
 import EmployeeListReal from "@/components/dashboard/EmployeeListReal";
 import { CreateTaskDialog } from "@/components/dashboard/CreateTaskDialog";
@@ -122,6 +122,18 @@ const Layout = ({ children }: LayoutProps) => {
               >
                 <FileText className="h-4 w-4" />
                 Отчеты
+              </Button>
+            </Link>
+            <Link to="/subscription">
+              <Button 
+                variant="ghost" 
+                className={`w-full justify-start gap-2 text-sidebar-foreground hover:bg-sidebar-accent ${
+                  location.pathname === "/subscription" ? "bg-sidebar-accent" : ""
+                }`}
+                size="sm"
+              >
+                <CreditCard className="h-4 w-4" />
+                Подписка
               </Button>
             </Link>
           </nav>
