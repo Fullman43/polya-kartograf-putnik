@@ -1,12 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 import MapView from "@/components/dashboard/MapView";
+import { MapProvider } from "@/contexts/MapContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [focusOnEmployeeFn, setFocusOnEmployeeFn] = useState<((employeeId: string) => void) | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -23,9 +25,11 @@ const Dashboard = () => {
   }
 
   return (
-    <Layout>
-      <MapView />
-    </Layout>
+    <MapProvider value={{ focusOnEmployee: focusOnEmployeeFn || (() => {}) }}>
+      <Layout>
+        <MapView onMapReady={(fn) => setFocusOnEmployeeFn(() => fn)} />
+      </Layout>
+    </MapProvider>
   );
 };
 

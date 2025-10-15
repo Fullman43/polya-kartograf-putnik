@@ -16,10 +16,15 @@ declare global {
   }
 }
 
-const MapView = () => {
+interface MapViewProps {
+  onMapReady?: (focusOnEmployee: (employeeId: string) => void) => void;
+}
+
+const MapView = ({ onMapReady }: MapViewProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const routeLinesRef = useRef<any[]>([]);
+  const employeePlacemarksRef = useRef<Map<string, any>>(new Map());
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<string | null>(null);
   const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string; eta: string } | null>(null);
@@ -126,6 +131,18 @@ const MapView = () => {
     setRouteInfo(null);
   };
 
+  const focusOnEmployee = (employeeId: string) => {
+    const placemark = employeePlacemarksRef.current.get(employeeId);
+    if (placemark && mapInstance.current) {
+      // Open the balloon
+      placemark.balloon.open();
+      // Center map on employee
+      mapInstance.current.setCenter(placemark.geometry.getCoordinates(), 15, {
+        duration: 300,
+      });
+    }
+  };
+
   const handleGeocodeExistingTasks = async () => {
     setIsGeocodingTasks(true);
     
@@ -164,6 +181,9 @@ const MapView = () => {
 
           mapInstance.current = map;
 
+          // Clear previous employee placemarks
+          employeePlacemarksRef.current.clear();
+
           // Add employee markers
           employeesWithLocation.forEach((employee) => {
             const coords = parsePointToCoordinates(employee.current_location as any);
@@ -195,6 +215,7 @@ const MapView = () => {
             );
 
             map.geoObjects.add(placemark);
+            employeePlacemarksRef.current.set(employee.id, placemark);
           });
 
           // Add task markers
@@ -220,6 +241,11 @@ const MapView = () => {
 
             map.geoObjects.add(placemark);
           });
+
+          // Notify parent that map is ready
+          if (onMapReady) {
+            onMapReady(focusOnEmployee);
+          }
         });
       }
     };

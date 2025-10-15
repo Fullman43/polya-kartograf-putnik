@@ -3,10 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { User, MapPin, Clock } from "lucide-react";
 import { useEmployees } from "@/hooks/useEmployees";
 import { useTasks } from "@/hooks/useTasks";
+import { useMapContext } from "@/contexts/MapContext";
 
 const EmployeeListReal = () => {
   const { data: employees, isLoading } = useEmployees();
   const { data: tasks } = useTasks();
+  const { focusOnEmployee } = useMapContext();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -62,6 +64,7 @@ const EmployeeListReal = () => {
             <div
               key={employee.id}
               className="p-3 bg-card rounded-lg cursor-pointer hover:bg-accent transition-colors border border-border"
+              onClick={() => focusOnEmployee(employee.id)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2">
