@@ -11,6 +11,7 @@ import Tasks from "./pages/Tasks";
 import Employees from "./pages/Employees";
 import Reports from "./pages/Reports";
 import Subscription from "./pages/Subscription";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/employees" element={<Employees />} />

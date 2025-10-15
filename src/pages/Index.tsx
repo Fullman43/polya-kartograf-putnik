@@ -28,7 +28,7 @@ const Index = () => {
           </div>
           
           <div className="hidden md:flex items-center gap-8">
-            <Button onClick={() => navigate("/subscription")} variant="ghost" className="font-semibold">
+            <Button onClick={() => navigate("/pricing")} variant="ghost" className="font-semibold">
               Тарифы
             </Button>
             <Button onClick={() => navigate("/auth")} variant="outline" className="bg-white">
