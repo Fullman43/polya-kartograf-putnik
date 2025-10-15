@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       .from('employees')
       .select('organization_id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (empError) {
       console.error('Employee lookup error:', empError);
@@ -81,8 +81,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use the same organization_id as the creating user (can be null)
+    if (!employeeData) {
+      console.error('Employee record not found for user:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'Не удалось найти профиль сотрудника' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Use the same organization_id as the creating user
+    // For organization_owner role, this can be null if they haven't created org yet
     const organizationId = employeeData.organization_id;
+    
+    console.log(`Creating employee with organization_id: ${organizationId}`);
 
     // Parse and validate request body
     const body: CreateEmployeeRequest = await req.json();
