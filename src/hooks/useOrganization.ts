@@ -28,10 +28,33 @@ export const useOrganization = () => {
     queryKey: ["organization"],
     queryFn: async () => {
       console.log("useOrganization - fetching...");
+      
+      // First get the current user's employee record to find their organization_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log("useOrganization - no user");
+        return null;
+      }
+
+      const { data: employee, error: empError } = await supabase
+        .from("employees")
+        .select("organization_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      console.log("useOrganization - employee:", { employee, empError });
+
+      if (empError || !employee?.organization_id) {
+        console.log("useOrganization - no organization_id");
+        return null;
+      }
+
+      // Then get the organization
       const { data, error } = await supabase
         .from("organizations")
         .select("*")
-        .maybeSingle();
+        .eq("id", employee.organization_id)
+        .single();
 
       console.log("useOrganization - result:", { data, error });
       if (error) throw error;
