@@ -96,6 +96,20 @@ async function getUserTasks(userId: string, status?: string) {
   return data || [];
 }
 
+function translateWorkType(workType: string): string {
+  const translations: Record<string, string> = {
+    'installation': 'Установка',
+    'repair': 'Ремонт',
+    'maintenance': 'Обслуживание',
+    'inspection': 'Осмотр',
+    'consultation': 'Консультация',
+    'mounting': 'Монтаж',
+    'dismantling': 'Демонтаж',
+    'diagnostics': 'Диагностика',
+  };
+  return translations[workType] || workType;
+}
+
 function formatTaskCard(task: any): string {
   const statusEmoji: Record<string, string> = {
     pending: '🔵',
@@ -123,12 +137,12 @@ function formatTaskCard(task: any): string {
   return `
 ${statusEmoji[task.status] || '⚪'} <b>Заявка №${task.order_number}</b>
 
-🔧 ${task.work_type}
+🔧 ${translateWorkType(task.work_type)}
 ${priorityEmoji[task.priority]} Приоритет: ${task.priority === 'high' ? 'Высокий' : task.priority === 'medium' ? 'Средний' : 'Низкий'}
 📍 ${task.address}
 🕐 ${scheduledTime}
 ${task.customer_name ? `👤 ${task.customer_name}` : ''}
-${task.customer_phone ? `📞 ${task.customer_phone}` : ''}
+${task.customer_phone ? `📞 <a href="tel:${task.customer_phone}">${task.customer_phone}</a>` : ''}
 ${task.description ? `📝 ${task.description}` : ''}
 
 <b>Статус:</b> ${getStatusText(task.status)}
@@ -431,9 +445,12 @@ async function handleCallbackQuery(callbackQuery: any) {
       'Нажмите кнопку ниже и отправьте вашу текущую геолокацию.',
       {
         reply_markup: {
-          keyboard: [[{ text: '📍 Подтвердить местоположение', request_location: true }]],
+          keyboard: [
+            [{ text: '📍 Подтвердить местоположение', request_location: true }],
+            [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }]
+          ],
           resize_keyboard: true,
-          one_time_keyboard: true,
+          one_time_keyboard: false,
         },
       }
     );
@@ -458,9 +475,12 @@ async function handleCallbackQuery(callbackQuery: any) {
       'Нажмите кнопку ниже и отправьте вашу текущую геолокацию с места выполнения работ.',
       {
         reply_markup: {
-          keyboard: [[{ text: '📍 Подтвердить завершение', request_location: true }]],
+          keyboard: [
+            [{ text: '📍 Подтвердить завершение', request_location: true }],
+            [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }]
+          ],
           resize_keyboard: true,
-          one_time_keyboard: true,
+          one_time_keyboard: false,
         },
       }
     );
@@ -560,22 +580,30 @@ async function handleMessage(message: TelegramMessage) {
     if (botState?.waiting_for === 'start_location') {
       const taskId = botState.task_id;
       
-      await supabase
+      console.log('Starting work - location:', message.location);
+      
+      const { data: taskUpdate, error: taskError } = await supabase
         .from('tasks')
         .update({
           status: 'in_progress',
           started_at: new Date().toISOString(),
           start_location: `(${message.location.latitude},${message.location.longitude})`,
         })
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .select();
 
-      await supabase
+      console.log('Task update result:', { taskUpdate, taskError });
+
+      const { data: empUpdate, error: empError } = await supabase
         .from('employees')
         .update({
           current_location: `(${message.location.latitude},${message.location.longitude})`,
           location_updated_at: new Date().toISOString(),
         })
-        .eq('id', employee.id);
+        .eq('id', employee.id)
+        .select();
+
+      console.log('Employee location update result:', { empUpdate, empError });
 
       await supabase
         .from('telegram_bot_state')
@@ -588,7 +616,10 @@ async function handleMessage(message: TelegramMessage) {
         'Для автоматического отслеживания можете включить Live Location (живую геолокацию).',
         {
           reply_markup: {
-            keyboard: [[{ text: '📍 Включить отслеживание', request_location: true }]],
+            keyboard: [
+              [{ text: '📍 Включить отслеживание', request_location: true }],
+              [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }]
+            ],
             resize_keyboard: true,
           },
         }
@@ -600,22 +631,30 @@ async function handleMessage(message: TelegramMessage) {
     if (botState?.waiting_for === 'completion_location') {
       const taskId = botState.task_id;
       
-      await supabase
+      console.log('Completing work - location:', message.location);
+      
+      const { data: taskComplete, error: completeError } = await supabase
         .from('tasks')
         .update({
           status: 'completed',
           completed_at: new Date().toISOString(),
           completion_location: `(${message.location.latitude},${message.location.longitude})`,
         })
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .select();
 
-      await supabase
+      console.log('Task completion result:', { taskComplete, completeError });
+
+      const { data: empUpdate, error: empError } = await supabase
         .from('employees')
         .update({
           current_location: `(${message.location.latitude},${message.location.longitude})`,
           location_updated_at: new Date().toISOString(),
         })
-        .eq('id', employee.id);
+        .eq('id', employee.id)
+        .select();
+
+      console.log('Employee location update result:', { empUpdate, empError });
 
       await supabase
         .from('telegram_bot_state')
@@ -626,7 +665,17 @@ async function handleMessage(message: TelegramMessage) {
         '✅ Работа завершена!\n\n' +
         '📍 Геолокация завершения сохранена\n' +
         '⏱️ Время работы будет рассчитано автоматически\n\n' +
-        'Спасибо за работу! 👍'
+        'Спасибо за работу! 👍',
+        {
+          reply_markup: {
+            keyboard: [
+              [{ text: '📋 Мои задачи' }, { text: '🟡 Активные задачи' }],
+              [{ text: '✅ Завершенные задачи' }, { text: '📊 Мой статус' }]
+            ],
+            resize_keyboard: true,
+            persistent: true,
+          },
+        }
       );
       return;
     }
@@ -663,6 +712,8 @@ async function handleMessage(message: TelegramMessage) {
     const user = await getUserByTelegramId(telegramId);
     if (!user) return;
 
+    console.log('Photo upload started for task:', botState.task_id);
+
     const fileId = message.photo[message.photo.length - 1].file_id;
 
     // Get file info
@@ -670,29 +721,39 @@ async function handleMessage(message: TelegramMessage) {
     const fileData = await fileResponse.json();
     const filePath = fileData.result.file_path;
 
+    console.log('File info retrieved:', filePath);
+
     // Download file
     const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${filePath}`;
     const imageResponse = await fetch(fileUrl);
     const imageBlob = await imageResponse.arrayBuffer();
 
+    console.log('File downloaded, size:', imageBlob.byteLength);
+
     // Upload to Supabase Storage
     const fileName = `${botState.task_id}/${Date.now()}.jpg`;
-    const { data: uploadData } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('task-photos')
       .upload(fileName, imageBlob, {
         contentType: 'image/jpeg',
       });
+
+    console.log('Storage upload result:', { uploadData, uploadError });
 
     if (uploadData) {
       const { data: urlData } = supabase.storage
         .from('task-photos')
         .getPublicUrl(fileName);
 
-      await supabase.from('task_photos').insert({
+      console.log('Public URL generated:', urlData.publicUrl);
+
+      const { data: photoData, error: photoError } = await supabase.from('task_photos').insert({
         task_id: botState.task_id,
         uploaded_by: user.user_id,
         photo_url: urlData.publicUrl,
-      });
+      }).select();
+
+      console.log('Photo DB insert result:', { photoData, photoError });
 
       await supabase
         .from('telegram_bot_state')
@@ -700,6 +761,9 @@ async function handleMessage(message: TelegramMessage) {
         .eq('telegram_id', telegramId);
 
       await sendMessage(chatId, '✅ Фото загружено');
+    } else {
+      console.error('Photo upload failed:', uploadError);
+      await sendMessage(chatId, '❌ Ошибка загрузки фото');
     }
     return;
   }
@@ -709,18 +773,26 @@ async function handleMessage(message: TelegramMessage) {
     const user = await getUserByTelegramId(telegramId);
     if (!user) return;
 
-    await supabase.from('task_comments').insert({
+    console.log('Adding comment for task:', botState.task_id, 'by user:', user.user_id);
+
+    const { data: commentData, error: commentError } = await supabase.from('task_comments').insert({
       task_id: botState.task_id,
       user_id: user.user_id,
       comment: message.text,
-    });
+    }).select();
+
+    console.log('Comment insert result:', { commentData, commentError });
 
     await supabase
       .from('telegram_bot_state')
       .delete()
       .eq('telegram_id', telegramId);
 
-    await sendMessage(chatId, '✅ Комментарий добавлен');
+    if (commentError) {
+      await sendMessage(chatId, '❌ Ошибка добавления комментария');
+    } else {
+      await sendMessage(chatId, '✅ Комментарий добавлен');
+    }
     return;
   }
 }
