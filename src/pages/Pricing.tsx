@@ -60,7 +60,7 @@ const Pricing = () => {
       <header className="container mx-auto px-4 py-6">
         <nav className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="FieldControl.ru" className="h-12 w-12" />
+            <img src={logo} alt="FieldControl.ru" className="h-14 w-14" />
             <span className="text-xl font-semibold">FieldControl.ru</span>
           </div>
           
