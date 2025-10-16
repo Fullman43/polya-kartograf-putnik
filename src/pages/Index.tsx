@@ -132,7 +132,7 @@ const Index = () => {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 mt-20 py-12">
+      <footer className="bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 mt-20 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Company Info */}
@@ -145,7 +145,7 @@ const Index = () => {
                 />
                 <h3 className="text-xl font-bold text-white">FieldControl.ru</h3>
               </div>
-              <p className="text-white/70">
+              <p className="text-slate-300">
                 Сервис для управления выездными сотрудниками
               </p>
             </div>
@@ -153,7 +153,7 @@ const Index = () => {
             {/* Links */}
             <div>
               <h4 className="font-semibold text-white mb-4">Документы</h4>
-              <ul className="space-y-2 text-white/70">
+              <ul className="space-y-2 text-slate-300">
                 <li>
                   <a href="/privacy-policy" className="hover:text-white transition-colors hover:underline">
                     Политика конфиденциальности
@@ -171,14 +171,14 @@ const Index = () => {
                 </li>
               </ul>
               <div className="mt-6">
-                <p className="text-white/70">
+                <p className="text-slate-300">
                   Email: <a href="mailto:info@fieldcontrol.ru" className="hover:text-white transition-colors hover:underline">info@fieldcontrol.ru</a>
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-white/10 mt-8 pt-8 text-center text-white/60">
+          <div className="border-t border-slate-700 mt-8 pt-8 text-center text-slate-400">
             <p>© 2025 FieldControl.ru. Все права защищены.</p>
           </div>
         </div>
