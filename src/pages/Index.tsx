@@ -1,15 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
-import { MapPin, CheckSquare, BarChart3, Send } from "lucide-react";
+import { MapPin, CheckSquare, BarChart3, Send, Menu, X } from "lucide-react";
 import logo from "@/assets/fieldcontrol-logo.png";
 import heroImage from "@/assets/hero-dashboard.png";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -20,13 +21,14 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100">
       {/* Header */}
-      <header className="container mx-auto px-4 py-6">
+      <header className="container mx-auto px-4 py-4 md:py-6">
         <nav className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="FieldControl.ru" className="h-[84px] w-[84px]" />
-            <span className="text-xl font-semibold">FieldControl.ru</span>
+          <div className="flex items-center gap-2 md:gap-3">
+            <img src={logo} alt="FieldControl.ru" className="h-[56px] w-[56px] md:h-[84px] md:w-[84px]" />
+            <span className="text-lg md:text-xl font-semibold">FieldControl.ru</span>
           </div>
           
+          {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
             <Button onClick={() => navigate("/pricing")} variant="ghost" className="font-semibold">
               Тарифы
@@ -35,25 +37,61 @@ const Index = () => {
               Войти
             </Button>
           </div>
+
+          {/* Mobile Menu Button */}
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
         </nav>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 space-y-2">
+            <Button 
+              onClick={() => {
+                navigate("/pricing");
+                setMobileMenuOpen(false);
+              }} 
+              variant="ghost" 
+              className="w-full justify-start font-semibold"
+            >
+              Тарифы
+            </Button>
+            <Button 
+              onClick={() => {
+                navigate("/auth");
+                setMobileMenuOpen(false);
+              }} 
+              variant="outline" 
+              className="w-full justify-start"
+            >
+              Войти
+            </Button>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <div className="container mx-auto px-4 py-10 md:py-20">
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Left Content */}
           <div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight">
               Полный контроль и эффективность вашей выездной команды
             </h1>
 
-            <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+            <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8 leading-relaxed">
               Отслеживайте сотрудников в реальном времени, управляйте задачами и повышайте продуктивность с помощью умной системы GPS-мониторинга.
             </p>
 
             <Button 
               size="lg" 
-              className="bg-emerald-500 hover:bg-emerald-600 text-white px-8"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 md:px-8 w-full sm:w-auto"
               onClick={() => navigate("/auth")}
             >
               Попробовать бесплатно
@@ -73,7 +111,7 @@ const Index = () => {
         </div>
 
         {/* Features Grid */}
-        <div id="features" className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-20">
+        <div id="features" className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mt-12 md:mt-20">
           <Card className="p-6 bg-white shadow-lg hover:shadow-xl transition-shadow">
             <div className="h-14 w-14 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
               <MapPin className="h-7 w-7 text-blue-600" />
@@ -116,7 +154,7 @@ const Index = () => {
         </div>
 
         {/* Stats Section */}
-        <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+        <div className="mt-12 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-4xl mx-auto">
           {[
             { value: "95%", label: "Точность GPS" },
             { value: "< 2с", label: "Обновление данных" },
@@ -124,36 +162,36 @@ const Index = () => {
             { value: "24/7", label: "Поддержка" },
           ].map((stat, idx) => (
             <div key={idx} className="text-center">
-              <div className="text-4xl font-bold text-primary mb-1">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
+              <div className="text-3xl md:text-4xl font-bold text-primary mb-1">{stat.value}</div>
+              <div className="text-xs md:text-sm text-muted-foreground">{stat.label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 mt-20 py-12">
+      <footer className="bg-slate-900/95 backdrop-blur-sm border-t border-slate-700 mt-12 md:mt-20 py-8 md:py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             {/* Company Info */}
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <img 
                   src={logo} 
                   alt="FieldControl.ru" 
-                  className="h-[60px] w-[60px]"
+                  className="h-[48px] w-[48px] md:h-[60px] md:w-[60px]"
                 />
-                <h3 className="text-xl font-bold text-white">FieldControl.ru</h3>
+                <h3 className="text-lg md:text-xl font-bold text-white">FieldControl.ru</h3>
               </div>
-              <p className="text-slate-300">
+              <p className="text-sm md:text-base text-slate-300">
                 Сервис для управления выездными сотрудниками
               </p>
             </div>
 
             {/* Links */}
             <div>
-              <h4 className="font-semibold text-white mb-4">Документы</h4>
-              <ul className="space-y-2 text-slate-300">
+              <h4 className="font-semibold text-white mb-3 md:mb-4 text-sm md:text-base">Документы</h4>
+              <ul className="space-y-2 text-slate-300 text-sm md:text-base">
                 <li>
                   <a href="/privacy-policy" className="hover:text-white transition-colors hover:underline">
                     Политика конфиденциальности
@@ -170,15 +208,15 @@ const Index = () => {
                   </a>
                 </li>
               </ul>
-              <div className="mt-6">
-                <p className="text-slate-300">
+              <div className="mt-4 md:mt-6">
+                <p className="text-slate-300 text-sm md:text-base">
                   Email: <a href="mailto:info@fieldcontrol.ru" className="hover:text-white transition-colors hover:underline">info@fieldcontrol.ru</a>
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="border-t border-slate-700 mt-8 pt-8 text-center text-slate-400">
+          <div className="border-t border-slate-700 mt-6 md:mt-8 pt-6 md:pt-8 text-center text-slate-400 text-sm md:text-base">
             <p>© 2025 FieldControl.ru. Все права защищены.</p>
           </div>
         </div>
