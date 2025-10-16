@@ -139,7 +139,7 @@ const Index = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <img 
-                  src="/src/assets/fieldcontrol-logo.png" 
+                  src={logo} 
                   alt="FieldControl.ru" 
                   className="h-[60px] w-[60px]"
                 />
