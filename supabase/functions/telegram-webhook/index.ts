@@ -860,6 +860,18 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify Telegram secret token
+  const secretToken = req.headers.get('X-Telegram-Bot-Api-Secret-Token');
+  const expectedToken = Deno.env.get('TELEGRAM_SECRET_TOKEN');
+
+  if (!secretToken || secretToken !== expectedToken) {
+    console.error('Invalid or missing secret token');
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const update: TelegramUpdate = await req.json();
     console.log('Received update:', JSON.stringify(update));

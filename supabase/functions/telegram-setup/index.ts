@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!;
+const TELEGRAM_SECRET_TOKEN = Deno.env.get('TELEGRAM_SECRET_TOKEN')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 
 serve(async (req) => {
@@ -28,6 +29,7 @@ serve(async (req) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: webhookUrl,
+          secret_token: TELEGRAM_SECRET_TOKEN,
           allowed_updates: ['message', 'callback_query'],
           drop_pending_updates: true,
         }),
