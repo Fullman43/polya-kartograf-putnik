@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export const OrganizationRegistration = () => {
   const [loading, setLoading] = useState(false);
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
   const [formData, setFormData] = useState({
     // Organization data
     name: "",
@@ -198,7 +200,38 @@ export const OrganizationRegistration = () => {
         />
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading}>
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id="org-privacy-policy" 
+          checked={agreedToPrivacy}
+          onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+        />
+        <label
+          htmlFor="org-privacy-policy"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Я согласен с{" "}
+          <a 
+            href="/privacy-policy" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            политикой конфиденциальности
+          </a>
+          {" "}и{" "}
+          <a 
+            href="/terms-of-service" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            пользовательским соглашением
+          </a>
+        </label>
+      </div>
+
+      <Button type="submit" className="w-full" disabled={loading || !agreedToPrivacy}>
         {loading ? "Создание..." : "Создать организацию"}
       </Button>
 
