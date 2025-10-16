@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { User, Session } from "@supabase/supabase-js";
 import { OrganizationRegistration } from "@/components/auth/OrganizationRegistration";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<"operator" | "employee" | "organization_owner">("employee");
+  const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener first
@@ -233,7 +235,27 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="privacy-policy" 
+                    checked={agreedToPrivacy}
+                    onCheckedChange={(checked) => setAgreedToPrivacy(checked === true)}
+                  />
+                  <label
+                    htmlFor="privacy-policy"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Я согласен с{" "}
+                    <a 
+                      href="/privacy-policy" 
+                      target="_blank"
+                      className="underline hover:text-primary"
+                    >
+                      политикой конфиденциальности
+                    </a>
+                  </label>
+                </div>
+                <Button type="submit" className="w-full" disabled={loading || !agreedToPrivacy}>
                   {loading ? "Регистрация..." : "Зарегистрироваться"}
                 </Button>
               </form>
