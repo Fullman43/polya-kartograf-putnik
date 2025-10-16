@@ -130,6 +130,59 @@ const Index = () => {
           ))}
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 mt-20 py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Company Info */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <img 
+                  src="/src/assets/fieldcontrol-logo.png" 
+                  alt="FieldControl.ru" 
+                  className="h-8 w-8"
+                />
+                <h3 className="text-xl font-bold text-white">FieldControl.ru</h3>
+              </div>
+              <p className="text-white/70">
+                Сервис для управления выездными сотрудниками
+              </p>
+            </div>
+
+            {/* Links */}
+            <div>
+              <h4 className="font-semibold text-white mb-4">Документы</h4>
+              <ul className="space-y-2 text-white/70">
+                <li>
+                  <a href="/privacy-policy" className="hover:text-white transition-colors hover:underline">
+                    Политика конфиденциальности
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms-of-service" className="hover:text-white transition-colors hover:underline">
+                    Пользовательское соглашение
+                  </a>
+                </li>
+                <li>
+                  <a href="/consent" className="hover:text-white transition-colors hover:underline">
+                    Согласие на обработку ПД
+                  </a>
+                </li>
+              </ul>
+              <div className="mt-6">
+                <p className="text-white/70">
+                  Email: <a href="mailto:info@fieldcontrol.ru" className="hover:text-white transition-colors hover:underline">info@fieldcontrol.ru</a>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 mt-8 pt-8 text-center text-white/60">
+            <p>© 2025 FieldControl.ru. Все права защищены.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

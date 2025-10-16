@@ -249,9 +249,19 @@ const Auth = () => {
                     <a 
                       href="/privacy-policy" 
                       target="_blank"
-                      className="underline hover:text-primary"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
                     >
                       политикой конфиденциальности
+                    </a>
+                    {" "}и{" "}
+                    <a 
+                      href="/terms-of-service" 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      пользовательским соглашением
                     </a>
                   </label>
                 </div>
