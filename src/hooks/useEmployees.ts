@@ -96,10 +96,13 @@ export const useUpdateEmployeeStatus = () => {
       status: "available" | "busy" | "offline";
       location?: string;
     }) => {
-      const updateData: any = { status };
+      const updateData: any = { 
+        status,
+        location_updated_at: new Date().toISOString()
+      };
+      
       if (location) {
         updateData.current_location = location;
-        updateData.location_updated_at = new Date().toISOString();
       }
 
       const { error } = await supabase
