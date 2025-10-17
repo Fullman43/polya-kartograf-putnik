@@ -604,7 +604,7 @@ async function handleMessage(message: TelegramMessage) {
       const { data: empUpdate, error: empError } = await supabase
         .from('employees')
         .update({
-          current_location: `(${message.location.latitude},${message.location.longitude})`,
+          current_location: `(${message.location.longitude},${message.location.latitude})`,
           location_updated_at: new Date().toISOString(),
         })
         .eq('id', employee.id)
@@ -645,7 +645,7 @@ async function handleMessage(message: TelegramMessage) {
         .update({
           status: 'in_progress',
           started_at: new Date().toISOString(),
-          start_location: `(${message.location.latitude},${message.location.longitude})`,
+          start_location: `(${message.location.longitude},${message.location.latitude})`,
         })
         .eq('id', taskId)
         .select();
@@ -655,7 +655,7 @@ async function handleMessage(message: TelegramMessage) {
       const { data: empUpdate, error: empError } = await supabase
         .from('employees')
         .update({
-          current_location: `(${message.location.latitude},${message.location.longitude})`,
+          current_location: `(${message.location.longitude},${message.location.latitude})`,
           location_updated_at: new Date().toISOString(),
         })
         .eq('id', employee.id)
@@ -696,7 +696,7 @@ async function handleMessage(message: TelegramMessage) {
         .update({
           status: 'completed',
           completed_at: new Date().toISOString(),
-          completion_location: `(${message.location.latitude},${message.location.longitude})`,
+          completion_location: `(${message.location.longitude},${message.location.latitude})`,
         })
         .eq('id', taskId)
         .select();
@@ -706,7 +706,7 @@ async function handleMessage(message: TelegramMessage) {
       const { data: empUpdate, error: empError } = await supabase
         .from('employees')
         .update({
-          current_location: `(${message.location.latitude},${message.location.longitude})`,
+          current_location: `(${message.location.longitude},${message.location.latitude})`,
           location_updated_at: new Date().toISOString(),
         })
         .eq('id', employee.id)
@@ -742,7 +742,7 @@ async function handleMessage(message: TelegramMessage) {
     await supabase
       .from('employees')
       .update({
-        current_location: `(${message.location.latitude},${message.location.longitude})`,
+        current_location: `(${message.location.longitude},${message.location.latitude})`,
         location_updated_at: new Date().toISOString(),
       })
       .eq('id', employee.id);
