@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.telegram-setup]
 verify_jwt = false
+
+[functions.suggest-address]
+verify_jwt = false

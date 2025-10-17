@@ -2,6 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export interface TaskPhoto {
+  id: string;
+  task_id: string;
+  photo_url: string;
+  uploaded_by: string;
+  created_at: string;
+}
+
 export const useTaskPhotos = (taskId: string) => {
   return useQuery({
     queryKey: ["task-photos", taskId],
@@ -94,6 +102,83 @@ export const useUploadTaskPhoto = () => {
       toast({
         title: "Ошибка загрузки фото",
         description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+};
+
+// Bulk upload multiple photos for a task
+export const useUploadTaskPhotosBulk = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ taskId, files }: { taskId: string; files: File[] }) => {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session?.user) {
+        throw new Error("Необходимо войти в систему");
+      }
+
+      const userId = session.user.id;
+      const uploadResults = [];
+
+      // Upload all files in parallel
+      for (const file of files) {
+        try {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${userId}/${taskId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          
+          // Upload to storage
+          const { error: uploadError } = await supabase.storage
+            .from("task-photos")
+            .upload(fileName, file);
+
+          if (uploadError) throw uploadError;
+
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from("task-photos")
+            .getPublicUrl(fileName);
+
+          // Insert into database
+          const { data, error } = await supabase
+            .from("task_photos")
+            .insert({
+              task_id: taskId,
+              photo_url: publicUrl,
+              uploaded_by: userId,
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          
+          uploadResults.push(data);
+        } catch (error) {
+          console.error(`Error uploading file ${file.name}:`, error);
+          // Continue with other files even if one fails
+        }
+      }
+
+      return uploadResults;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: ["task-photos", variables.taskId] 
+      });
+      
+      toast({
+        title: "Успешно",
+        description: `Загружено фото: ${data.length} из ${variables.files.length}`,
+      });
+    },
+    onError: (error) => {
+      console.error("Bulk upload error:", error);
+      toast({
+        title: "Ошибка загрузки",
+        description: error.message || "Не удалось загрузить фото",
         variant: "destructive",
       });
     },

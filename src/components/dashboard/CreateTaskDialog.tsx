@@ -19,8 +19,12 @@ import {
 } from "@/components/ui/select";
 import { useCreateTask } from "@/hooks/useTasks";
 import { useEmployees } from "@/hooks/useEmployees";
-import { geocodeAddress, formatToPostGISPoint } from "@/lib/routing";
+import { formatToPostGISPoint } from "@/lib/routing";
 import { useToast } from "@/hooks/use-toast";
+import { AddressAutocomplete } from "@/components/ui/address-autocomplete";
+import { AddressSuggestion } from "@/hooks/useAddressSuggestions";
+import { useUploadTaskPhotosBulk } from "@/hooks/useTaskPhotos";
+import { X, ImagePlus } from "lucide-react";
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -31,12 +35,10 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
   const createTask = useCreateTask();
   const { data: employees } = useEmployees();
   const { toast } = useToast();
+  const uploadPhotosBulk = useUploadTaskPhotosBulk();
   
   const [formData, setFormData] = useState({
-    city: "",
-    street: "",
-    houseNumber: "",
-    apartment: "",
+    address: "",
     type: "",
     description: "",
     date: new Date().toISOString().split("T")[0],
@@ -46,35 +48,74 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
     customerPhone: "",
     priority: "medium",
   });
-  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [addressDetails, setAddressDetails] = useState<AddressSuggestion | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Validate file size (max 5MB per file)
+    const validFiles = files.filter(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Файл слишком большой",
+          description: `${file.name} превышает 5MB`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      return true;
+    });
+
+    // Limit to 5 photos total
+    if (selectedPhotos.length + validFiles.length > 5) {
+      toast({
+        title: "Слишком много фото",
+        description: "Максимум 5 фотографий",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedPhotos([...selectedPhotos, ...validFiles]);
+
+    // Create previews
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removePhoto = (index: number) => {
+    setSelectedPhotos(prev => prev.filter((_, i) => i !== index));
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    setIsGeocoding(true);
+    if (!addressDetails) {
+      toast({
+        title: "Ошибка",
+        description: "Выберите адрес из списка подсказок",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     
     try {
-      // Construct full address from separate fields
-      const fullAddress = `${formData.city} ${formData.street} ${formData.houseNumber} ${formData.apartment ? 'кв. ' + formData.apartment : ''}`.trim();
-      
-      // Geocode the address
-      const coordinates = await geocodeAddress(fullAddress);
-      
-      if (!coordinates) {
-        toast({
-          title: "Ошибка геокодирования",
-          description: "Не удалось определить координаты адреса. Проверьте правильность написания.",
-          variant: "destructive",
-        });
-        setIsGeocoding(false);
-        return;
-      }
-
       const scheduledDateTime = `${formData.date}T${formData.time}:00`;
       
-      await createTask.mutateAsync({
-        address: fullAddress,
-        location: formatToPostGISPoint(coordinates.lat, coordinates.lng) as any,
+      const newTask = await createTask.mutateAsync({
+        address: formData.address,
+        location: formatToPostGISPoint(addressDetails.coordinates.lat, addressDetails.coordinates.lng) as any,
         work_type: formData.type,
         description: formData.description || null,
         scheduled_time: scheduledDateTime,
@@ -84,13 +125,20 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         priority: formData.priority as "low" | "medium" | "high" | "urgent",
         status: formData.employee ? "assigned" : "pending",
       });
+
+      // Upload photos if any
+      if (selectedPhotos.length > 0 && newTask?.id) {
+        await uploadPhotosBulk.mutateAsync({
+          taskId: newTask.id,
+          files: selectedPhotos,
+        });
+      }
       
       onOpenChange(false);
+      
+      // Reset form
       setFormData({
-        city: "",
-        street: "",
-        houseNumber: "",
-        apartment: "",
+        address: "",
         type: "",
         description: "",
         date: new Date().toISOString().split("T")[0],
@@ -100,6 +148,9 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         customerPhone: "",
         priority: "medium",
       });
+      setAddressDetails(null);
+      setSelectedPhotos([]);
+      setPhotoPreviews([]);
     } catch (error) {
       console.error("Error creating task:", error);
       toast({
@@ -108,7 +159,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
         variant: "destructive",
       });
     } finally {
-      setIsGeocoding(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -149,59 +200,25 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city">Город</Label>
-              <Input
-                id="city"
-                placeholder="г. Москва"
-                value={formData.city}
-                onChange={(e) =>
-                  setFormData({ ...formData, city: e.target.value })
+          <div className="space-y-2">
+            <Label htmlFor="address">Адрес</Label>
+            <AddressAutocomplete
+              value={formData.address}
+              onChange={(value, details) => {
+                setFormData({ ...formData, address: value });
+                if (details) {
+                  setAddressDetails(details);
                 }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="street">Улица</Label>
-              <Input
-                id="street"
-                placeholder="ул. Ленина"
-                value={formData.street}
-                onChange={(e) =>
-                  setFormData({ ...formData, street: e.target.value })
-                }
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="houseNumber">Номер дома</Label>
-              <Input
-                id="houseNumber"
-                placeholder="д. 45"
-                value={formData.houseNumber}
-                onChange={(e) =>
-                  setFormData({ ...formData, houseNumber: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="apartment">Квартира</Label>
-              <Input
-                id="apartment"
-                placeholder="кв. 12 (необязательно)"
-                value={formData.apartment}
-                onChange={(e) =>
-                  setFormData({ ...formData, apartment: e.target.value })
-                }
-              />
-            </div>
+              }}
+              placeholder="Начните вводить адрес..."
+            />
+            {addressDetails && (
+              <p className="text-xs text-muted-foreground">
+                {addressDetails.city && `${addressDetails.city}, `}
+                {addressDetails.street && `${addressDetails.street}, `}
+                {addressDetails.house && `д. ${addressDetails.house}`}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -312,6 +329,56 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             </div>
           </div>
 
+          <div className="space-y-2">
+            <Label>Прикрепить фото (до 5 шт.)</Label>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('photo-upload')?.click()}
+                  disabled={selectedPhotos.length >= 5}
+                >
+                  <ImagePlus className="h-4 w-4 mr-2" />
+                  Добавить фото
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {selectedPhotos.length}/5
+                </span>
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handlePhotoSelect}
+                />
+              </div>
+
+              {photoPreviews.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {photoPreviews.map((preview, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(index)}
+                        className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <DialogFooter>
             <Button
               type="button"
@@ -320,8 +387,8 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
             >
               Отмена
             </Button>
-            <Button type="submit" disabled={createTask.isPending || isGeocoding}>
-              {createTask.isPending || isGeocoding ? "Создание..." : "Создать задачу"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Создание..." : "Создать задачу"}
             </Button>
           </DialogFooter>
         </form>
