@@ -14,13 +14,20 @@ export const useTaskPhotos = (taskId: string) => {
   return useQuery({
     queryKey: ["task-photos", taskId],
     queryFn: async () => {
+      if (!taskId) return [];
+      
       const { data, error } = await supabase
         .from("task_photos")
         .select("*")
         .eq("task_id", taskId)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching task photos:', error);
+        throw error;
+      }
+      
+      console.log('Fetched photos for task', taskId, ':', data?.length || 0);
       return data;
     },
     enabled: !!taskId,
@@ -165,8 +172,14 @@ export const useUploadTaskPhotosBulk = () => {
       return uploadResults;
     },
     onSuccess: (data, variables) => {
+      console.log('Successfully uploaded photos, invalidating cache for task:', variables.taskId);
+      
+      // Invalidate both the specific task photos and all tasks
       queryClient.invalidateQueries({ 
         queryKey: ["task-photos", variables.taskId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ["task-photos"] 
       });
       
       toast({

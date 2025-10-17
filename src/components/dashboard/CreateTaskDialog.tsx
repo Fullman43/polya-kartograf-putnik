@@ -128,11 +128,20 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
 
       // Upload photos if any
       if (selectedPhotos.length > 0 && newTask?.id) {
-        await uploadPhotosBulk.mutateAsync({
-          taskId: newTask.id,
-          files: selectedPhotos,
-        });
+        console.log('Uploading photos for task:', newTask.id);
+        try {
+          await uploadPhotosBulk.mutateAsync({
+            taskId: newTask.id,
+            files: selectedPhotos,
+          });
+          console.log('Photos uploaded successfully');
+        } catch (error) {
+          console.error('Error uploading photos:', error);
+        }
       }
+      
+      // Small delay to ensure data is synced
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       onOpenChange(false);
       
