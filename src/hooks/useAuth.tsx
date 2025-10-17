@@ -30,28 +30,25 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Ошибка выхода:", error);
-        toast({
-          title: "Ошибка",
-          description: "Не удалось выйти из аккаунта",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Всегда очищаем локальное состояние и перенаправляем, даже если есть ошибка
+      await supabase.auth.signOut();
+      
+      // Очищаем локальное состояние
+      setSession(null);
+      setUser(null);
+      
       toast({
         title: "Выход выполнен",
         description: "Вы успешно вышли из аккаунта",
       });
+      
       navigate("/auth");
     } catch (error) {
+      // Даже при ошибке очищаем состояние и перенаправляем
       console.error("Ошибка при выходе:", error);
-      toast({
-        title: "Ошибка",
-        description: "Произошла ошибка при выходе",
-        variant: "destructive",
-      });
+      setSession(null);
+      setUser(null);
+      navigate("/auth");
     }
   };
 
