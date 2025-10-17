@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { toast } from "@/hooks/use-toast";
 
 export const useAuth = () => {
   const navigate = useNavigate();
@@ -28,8 +29,30 @@ export const useAuth = () => {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Ошибка выхода:", error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось выйти из аккаунта",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Выход выполнен",
+        description: "Вы успешно вышли из аккаунта",
+      });
+      navigate("/auth");
+    } catch (error) {
+      console.error("Ошибка при выходе:", error);
+      toast({
+        title: "Ошибка",
+        description: "Произошла ошибка при выходе",
+        variant: "destructive",
+      });
+    }
   };
 
   return {
