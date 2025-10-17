@@ -25,18 +25,30 @@ export const useUploadTaskPhoto = () => {
 
   return useMutation({
     mutationFn: async ({ taskId, file }: { taskId: string; file: File }) => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error("Не авторизован");
+      // Get current session instead of calling getUser
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        throw new Error("Ошибка проверки сессии");
+      }
+      
+      if (!session?.user) {
+        throw new Error("Необходимо войти в систему");
+      }
 
       // Upload file to storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userData.user.id}/${taskId}/${Date.now()}.${fileExt}`;
+      const fileName = `${session.user.id}/${taskId}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from("task-photos")
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
@@ -49,12 +61,16 @@ export const useUploadTaskPhoto = () => {
         .insert({
           task_id: taskId,
           photo_url: publicUrl,
-          uploaded_by: userData.user.id,
+          uploaded_by: session.user.id,
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
+      
       return data;
     },
     onSuccess: (data) => {
@@ -65,9 +81,19 @@ export const useUploadTaskPhoto = () => {
       });
     },
     onError: (error) => {
+      console.error("Upload photo error:", error);
+      
+      let errorMessage = "Не удалось загрузить фото";
+      
+      if (error.message.includes("session") || error.message.includes("Необходимо войти")) {
+        errorMessage = "Сессия истекла. Пожалуйста, войдите снова";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Ошибка",
-        description: error.message,
+        title: "Ошибка загрузки фото",
+        description: errorMessage,
         variant: "destructive",
       });
     },
