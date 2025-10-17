@@ -1,9 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Phone, User } from "lucide-react";
+import { MapPin, Clock, Phone, User, Camera, Pause, Play } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 import { translateWorkType } from "@/lib/utils";
+import { useTaskPhotos } from "@/hooks/useTaskPhotos";
+import { usePauseTask, useResumeTask } from "@/hooks/useTaskPauses";
 
 type Task = Database['public']['Tables']['tasks']['Row'];
 
@@ -11,13 +13,22 @@ interface MobileTaskCardProps {
   task: Task;
   isActive?: boolean;
   children?: React.ReactNode;
+  onPause?: () => void;
+  onResume?: () => void;
+  showPauseButton?: boolean;
 }
 
 export const MobileTaskCard = ({ 
   task, 
   isActive, 
-  children 
+  children,
+  onPause,
+  onResume,
+  showPauseButton = false
 }: MobileTaskCardProps) => {
+  const { data: photos } = useTaskPhotos(task.id);
+  const pauseTask = usePauseTask();
+  const resumeTask = useResumeTask();
   const getStatusBadge = () => {
     const statusMap = {
       in_progress: { label: 'В работе', className: 'bg-warning' },
@@ -84,6 +95,59 @@ export const MobileTaskCard = ({
       {task.description && (
         <div className="mt-3 p-2 bg-muted rounded text-sm line-clamp-2">
           {task.description}
+        </div>
+      )}
+
+      {/* Photos indicator */}
+      {photos && photos.length > 0 && (
+        <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+          <Camera className="h-4 w-4" />
+          <span>{photos.length} фото</span>
+        </div>
+      )}
+
+      {/* Pause/Resume buttons for active tasks */}
+      {showPauseButton && (
+        <div className="mt-4 space-y-2">
+          {task.status === "in_progress" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 border-orange-500 text-orange-600 hover:bg-orange-500/10"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onPause) {
+                  onPause();
+                } else {
+                  pauseTask.mutateAsync(task.id);
+                }
+              }}
+              disabled={pauseTask.isPending}
+            >
+              <Pause className="h-4 w-4" />
+              Поставить на паузу
+            </Button>
+          )}
+
+          {task.status === "paused" && (
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full gap-2 bg-success hover:bg-success/90"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onResume) {
+                  onResume();
+                } else {
+                  resumeTask.mutateAsync(task.id);
+                }
+              }}
+              disabled={resumeTask.isPending}
+            >
+              <Play className="h-4 w-4" />
+              Продолжить выполнение
+            </Button>
+          )}
         </div>
       )}
 
