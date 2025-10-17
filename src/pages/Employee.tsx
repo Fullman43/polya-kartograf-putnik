@@ -27,7 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateComment } from "@/hooks/useTaskComments";
-import { useUploadTaskPhoto } from "@/hooks/useTaskPhotos";
+import { useUploadTaskPhoto, useTaskPhotos } from "@/hooks/useTaskPhotos";
 import { Input } from "@/components/ui/input";
 import { TelegramSettings } from "@/components/employee/TelegramSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,6 +37,66 @@ import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Bell, BellOff } from "lucide-react";
 import { translateWorkType } from "@/lib/utils";
+
+// Photo Gallery Component
+const PhotoGallery = ({ taskId }: { taskId: string }) => {
+  const { data: photos, isLoading } = useTaskPhotos(taskId);
+
+  if (isLoading) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        Загрузка фотографий...
+      </div>
+    );
+  }
+
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        Фотографии отсутствуют
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <label className="text-sm font-medium mb-2 block">
+        <Camera className="h-4 w-4 inline mr-1" />
+        Загруженные фото ({photos.length})
+      </label>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {photos.map((photo) => (
+          <a
+            key={photo.id}
+            href={photo.photo_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative aspect-square rounded-lg overflow-hidden hover:opacity-80 transition-opacity border border-border"
+          >
+            <img
+              src={photo.photo_url}
+              alt="Фото задачи"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('Failed to load image:', photo.photo_url);
+                e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23666"%3EОшибка%3C/text%3E%3C/svg%3E';
+              }}
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 text-center">
+              {new Date(photo.created_at).toLocaleString("ru-RU", {
+                day: "2-digit",
+                month: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit"
+              })}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -652,10 +712,11 @@ const Employee = () => {
                       </Button>
                     </div>
 
+                    {/* Photo Upload Section */}
                     <div>
                       <label className="text-sm font-medium mb-2 block">
                         <Camera className="h-4 w-4 inline mr-1" />
-                        Фото отчёт
+                        Загрузить фото
                       </label>
                       <Input
                         type="file"
@@ -672,7 +733,15 @@ const Employee = () => {
                         }}
                         disabled={uploadPhoto.isPending}
                       />
+                      {uploadPhoto.isPending && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Загрузка фото...
+                        </p>
+                      )}
                     </div>
+
+                    {/* Photo Gallery Section */}
+                    <PhotoGallery taskId={task.id} />
                   </div>
                 </Card>
               );
