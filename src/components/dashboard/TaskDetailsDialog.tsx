@@ -5,6 +5,7 @@ import { useTaskComments } from "@/hooks/useTaskComments";
 import { useTaskPhotos } from "@/hooks/useTaskPhotos";
 import { Clock, MapPin, MessageSquare, Camera } from "lucide-react";
 import type { Task } from "@/hooks/useTasks";
+import { translateWorkType } from "@/lib/utils";
 
 interface TaskDetailsDialogProps {
   task: Task | null;
@@ -17,19 +18,6 @@ export const TaskDetailsDialog = ({ task, open, onOpenChange }: TaskDetailsDialo
   const { data: photos } = useTaskPhotos(task?.id || "");
 
   if (!task) return null;
-
-  const translateWorkType = (workType: string): string => {
-    const translations: Record<string, string> = {
-      'repair': 'Ремонт',
-      'diagnostics': 'Диагностика',
-      'installation': 'Установка',
-      'mounting': 'Монтаж',
-      'maintenance': 'Обслуживание',
-      'consultation': 'Консультация',
-      'inspection': 'Осмотр'
-    };
-    return translations[workType.toLowerCase()] || workType;
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

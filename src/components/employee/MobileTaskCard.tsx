@@ -3,20 +3,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Phone, User } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
+import { translateWorkType } from "@/lib/utils";
 
 type Task = Database['public']['Tables']['tasks']['Row'];
 
 interface MobileTaskCardProps {
   task: Task;
   isActive?: boolean;
-  translateWorkType: (type: string) => string;
   children?: React.ReactNode;
 }
 
 export const MobileTaskCard = ({ 
   task, 
   isActive, 
-  translateWorkType,
   children 
 }: MobileTaskCardProps) => {
   const getStatusBadge = () => {

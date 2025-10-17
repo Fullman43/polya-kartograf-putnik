@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskDetailsDialog } from "@/components/dashboard/TaskDetailsDialog";
 import type { Task } from "@/hooks/useTasks";
+import { translateWorkType } from "@/lib/utils";
 
 const Tasks = () => {
   const navigate = useNavigate();
@@ -30,20 +31,6 @@ const Tasks = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const queryClient = useQueryClient();
-
-  // Translation function for work types
-  const translateWorkType = (workType: string): string => {
-    const translations: Record<string, string> = {
-      'repair': 'Ремонт',
-      'diagnostics': 'Диагностика',
-      'installation': 'Установка',
-      'mounting': 'Монтаж',
-      'maintenance': 'Обслуживание',
-      'consultation': 'Консультация',
-      'inspection': 'Осмотр'
-    };
-    return translations[workType.toLowerCase()] || workType;
-  };
 
   useEffect(() => {
     if (!loading && !user) {
