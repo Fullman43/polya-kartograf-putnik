@@ -22,6 +22,7 @@ export const MobileTaskCard = ({
     const statusMap = {
       in_progress: { label: 'В работе', className: 'bg-warning' },
       en_route: { label: 'В пути', className: 'bg-info' },
+      paused: { label: '⏸ На паузе', className: 'bg-orange-500' },
       completed: { label: 'Завершена', className: 'bg-success' },
       pending: { label: 'Ожидает', className: 'bg-secondary' },
       assigned: { label: 'Назначена', className: 'bg-secondary' },

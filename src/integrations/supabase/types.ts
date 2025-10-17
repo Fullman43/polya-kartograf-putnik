@@ -255,6 +255,38 @@ export type Database = {
           },
         ]
       }
+      task_pauses: {
+        Row: {
+          created_at: string | null
+          id: string
+          paused_at: string
+          resumed_at: string | null
+          task_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          paused_at: string
+          resumed_at?: string | null
+          task_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          paused_at?: string
+          resumed_at?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_pauses_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_photos: {
         Row: {
           created_at: string | null
@@ -505,6 +537,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "en_route"
+        | "paused"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -649,6 +682,7 @@ export const Constants = {
         "completed",
         "cancelled",
         "en_route",
+        "paused",
       ],
     },
   },

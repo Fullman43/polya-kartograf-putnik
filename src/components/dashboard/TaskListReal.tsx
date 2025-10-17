@@ -37,6 +37,12 @@ const TaskListReal = () => {
             В процессе
           </Badge>
         );
+      case "paused":
+        return (
+          <Badge className="bg-orange-500 text-xs">
+            ⏸ На паузе
+          </Badge>
+        );
       case "completed":
         return (
           <Badge className="bg-success text-xs">

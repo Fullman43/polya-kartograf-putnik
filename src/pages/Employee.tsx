@@ -18,7 +18,9 @@ import {
   Camera,
   MessageSquare,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Pause,
+  Play
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks, useUpdateTask } from "@/hooks/useTasks";
@@ -28,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreateComment } from "@/hooks/useTaskComments";
 import { useUploadTaskPhoto, useTaskPhotos } from "@/hooks/useTaskPhotos";
+import { usePauseTask, useResumeTask } from "@/hooks/useTaskPauses";
 import { Input } from "@/components/ui/input";
 import { TelegramSettings } from "@/components/employee/TelegramSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -109,6 +112,8 @@ const Employee = () => {
   const queryClient = useQueryClient();
   const createComment = useCreateComment();
   const uploadPhoto = useUploadTaskPhoto();
+  const pauseTask = usePauseTask();
+  const resumeTask = useResumeTask();
   const { permission, requestPermission, subscription } = usePushNotifications();
   
   const [comments, setComments] = useState<Record<string, string>>({});
@@ -241,9 +246,9 @@ const Employee = () => {
     task.assigned_employee_id === currentEmployee?.id
   );
 
-  // Get the first in_progress, en_route or assigned task for this employee
+  // Get the first in_progress, en_route, assigned, or paused task for this employee
   const currentTask = myTasks?.find((task) => 
-    (task.status === "in_progress" || task.status === "en_route" || task.status === "assigned")
+    (task.status === "in_progress" || task.status === "en_route" || task.status === "assigned" || task.status === "paused")
   );
 
   // Filter tasks based on selected filter
@@ -253,7 +258,7 @@ const Employee = () => {
     switch (taskFilter) {
       case "active":
         return myTasks.filter(task => 
-          task.status === "assigned" || task.status === "en_route" || task.status === "in_progress"
+          task.status === "assigned" || task.status === "en_route" || task.status === "in_progress" || task.status === "paused"
         );
       case "completed":
         return myTasks.filter(task => task.status === "completed");
@@ -311,7 +316,7 @@ const Employee = () => {
     } else if (newStatus === "completed") {
       // Check if there are other active tasks
       const hasOtherActiveTasks = tasks?.some(
-        t => t.id !== currentTask.id && (t.status === "in_progress" || t.status === "en_route" || t.status === "assigned")
+        t => t.id !== currentTask.id && (t.status === "in_progress" || t.status === "en_route" || t.status === "assigned" || t.status === "paused")
       );
       
       await updateEmployeeStatus.mutateAsync({
@@ -324,6 +329,16 @@ const Employee = () => {
       title: "Статус обновлён",
       description: label,
     });
+  };
+
+  const handlePauseTask = async () => {
+    if (!currentTask) return;
+    await pauseTask.mutateAsync(currentTask.id);
+  };
+
+  const handleResumeTask = async () => {
+    if (!currentTask) return;
+    await resumeTask.mutateAsync(currentTask.id);
   };
 
   const handleEmployeeStatusChange = async (status: "available" | "busy" | "offline") => {
@@ -554,11 +569,13 @@ const Employee = () => {
                     <Badge className={
                       task.status === "in_progress" ? "bg-warning" : 
                       task.status === "en_route" ? "bg-info" : 
+                      task.status === "paused" ? "bg-orange-500" :
                       task.status === "completed" ? "bg-success" :
                       task.status === "pending" ? "bg-secondary" : "bg-secondary"
                     }>
                       {task.status === "in_progress" ? "В работе" : 
                        task.status === "en_route" ? "В пути" : 
+                       task.status === "paused" ? "⏸ На паузе" :
                        task.status === "completed" ? "Завершена" :
                        task.status === "pending" ? "Ожидает" : "Назначена"}
                     </Badge>
@@ -603,21 +620,23 @@ const Employee = () => {
                             {task.status === "assigned" && "0%"}
                             {task.status === "en_route" && "33%"}
                             {task.status === "in_progress" && "66%"}
+                            {task.status === "paused" && "66% (на паузе)"}
                             {task.status === "completed" && "100%"}
                           </span>
                         </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full transition-all duration-500 ${
-                              task.status === "completed" ? "bg-success" : "bg-primary"
-                            }`}
-                            style={{ 
-                              width: task.status === "assigned" ? "0%" : 
-                                     task.status === "en_route" ? "33%" :
-                                     task.status === "in_progress" ? "66%" : "100%" 
-                            }}
-                          />
-                        </div>
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full transition-all duration-500 ${
+                                task.status === "completed" ? "bg-success" : 
+                                task.status === "paused" ? "bg-orange-500" : "bg-primary"
+                              }`}
+                              style={{ 
+                                width: task.status === "assigned" ? "0%" : 
+                                       task.status === "en_route" ? "33%" :
+                                       (task.status === "in_progress" || task.status === "paused") ? "66%" : "100%" 
+                              }}
+                            />
+                          </div>
                         
                         {/* Visual Steps */}
                         <div className="flex items-center justify-between mt-3 text-xs">
@@ -629,8 +648,8 @@ const Employee = () => {
                             <div className={`h-2 w-2 rounded-full ${task.status === "en_route" ? "bg-primary" : "bg-muted-foreground"}`} />
                             В пути
                           </div>
-                          <div className={`flex items-center gap-1 ${task.status === "in_progress" ? "text-primary font-medium" : "text-muted-foreground"}`}>
-                            <div className={`h-2 w-2 rounded-full ${task.status === "in_progress" ? "bg-primary" : "bg-muted-foreground"}`} />
+                          <div className={`flex items-center gap-1 ${(task.status === "in_progress" || task.status === "paused") ? "text-primary font-medium" : "text-muted-foreground"}`}>
+                            <div className={`h-2 w-2 rounded-full ${(task.status === "in_progress" || task.status === "paused") ? "bg-primary" : "bg-muted-foreground"}`} />
                             На месте
                           </div>
                           <div className={`flex items-center gap-1 ${task.status === "completed" ? "text-success font-medium" : "text-muted-foreground"}`}>
@@ -638,6 +657,16 @@ const Employee = () => {
                             Завершена
                           </div>
                         </div>
+                        
+                        {/* Pause indicator */}
+                        {task.status === "paused" && (
+                          <div className="col-span-4 flex items-center justify-center mt-2">
+                            <div className="flex items-center gap-2 text-orange-600 font-medium text-sm">
+                              <div className="h-2 w-2 rounded-full bg-orange-500 animate-pulse" />
+                              ⏸ На паузе
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Action Buttons */}
@@ -675,6 +704,31 @@ const Employee = () => {
                             Завершить
                           </Button>
                         </div>
+
+                        {/* Pause/Resume Button */}
+                        {task.status === "in_progress" && (
+                          <Button
+                            variant="outline"
+                            className="w-full gap-2 border-orange-500 text-orange-600 hover:bg-orange-500/10"
+                            onClick={handlePauseTask}
+                            disabled={pauseTask.isPending}
+                          >
+                            <Pause className="h-4 w-4" />
+                            Поставить на паузу
+                          </Button>
+                        )}
+
+                        {task.status === "paused" && (
+                          <Button
+                            variant="default"
+                            className="w-full gap-2 bg-success hover:bg-success/90"
+                            onClick={handleResumeTask}
+                            disabled={resumeTask.isPending}
+                          >
+                            <Play className="h-4 w-4" />
+                            Продолжить выполнение
+                          </Button>
+                        )}
                       </div>
                     </>
                   )}
