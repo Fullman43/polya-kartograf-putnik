@@ -36,6 +36,7 @@ import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { PullToRefresh } from "@/components/PullToRefresh";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Bell, BellOff } from "lucide-react";
+import { translateWorkType } from "@/lib/utils";
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -204,20 +205,6 @@ const Employee = () => {
   };
 
   const filteredTasks = getFilteredTasks();
-
-  // Translation function for work types
-  const translateWorkType = (workType: string): string => {
-    const translations: Record<string, string> = {
-      'repair': 'Ремонт',
-      'diagnostics': 'Диагностика',
-      'installation': 'Установка',
-      'mounting': 'Монтаж',
-      'maintenance': 'Обслуживание',
-      'consultation': 'Консультация',
-      'inspection': 'Осмотр'
-    };
-    return translations[workType.toLowerCase()] || workType;
-  };
 
   const handleEnRoute = async () => {
     if (!currentTask || !currentEmployee || !currentLocation) return;
