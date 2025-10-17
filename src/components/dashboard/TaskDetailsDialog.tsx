@@ -17,6 +17,8 @@ export const TaskDetailsDialog = ({ task, open, onOpenChange }: TaskDetailsDialo
   const { data: comments } = useTaskComments(task?.id || "");
   const { data: photos } = useTaskPhotos(task?.id || "");
 
+  console.log('TaskDetailsDialog - task:', task?.id, 'photos:', photos);
+
   if (!task) return null;
 
   return (
@@ -94,7 +96,7 @@ export const TaskDetailsDialog = ({ task, open, onOpenChange }: TaskDetailsDialo
           )}
 
           {/* Photos */}
-          {photos && photos.length > 0 && (
+          {photos && photos.length > 0 ? (
             <Card className="p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Camera className="h-4 w-4" />
@@ -102,25 +104,39 @@ export const TaskDetailsDialog = ({ task, open, onOpenChange }: TaskDetailsDialo
                 <Badge variant="secondary">{photos.length}</Badge>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {photos.map((photo) => (
-                  <a
-                    key={photo.id}
-                    href={photo.photo_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative aspect-square rounded-lg overflow-hidden hover:opacity-80 transition-opacity"
-                  >
-                    <img
-                      src={photo.photo_url}
-                      alt="Фото задачи"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
-                      {new Date(photo.created_at).toLocaleString("ru-RU")}
-                    </div>
-                  </a>
-                ))}
+                {photos.map((photo) => {
+                  console.log('Rendering photo:', photo.id, 'url:', photo.photo_url);
+                  return (
+                    <a
+                      key={photo.id}
+                      href={photo.photo_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative aspect-square rounded-lg overflow-hidden hover:opacity-80 transition-opacity border-2 border-border"
+                    >
+                      <img
+                        src={photo.photo_url}
+                        alt="Фото задачи"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error('Image failed to load:', photo.photo_url);
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em"%3EОшибка%3C/text%3E%3C/svg%3E';
+                        }}
+                        onLoad={() => console.log('Image loaded successfully:', photo.photo_url)}
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
+                        {new Date(photo.created_at).toLocaleString("ru-RU")}
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
+            </Card>
+          ) : (
+            <Card className="p-4">
+              <p className="text-sm text-muted-foreground">
+                Нет загруженных фотографий
+              </p>
             </Card>
           )}
 
