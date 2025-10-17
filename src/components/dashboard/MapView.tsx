@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isToday } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { translateWorkType } from "@/lib/utils";
 
 declare global {
   interface Window {
@@ -35,20 +36,6 @@ const MapView = ({ onMapReady }: MapViewProps) => {
   const { data: tasks, isLoading: loadingTasks } = useTasks();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Translation function for work types
-  const translateWorkType = (workType: string): string => {
-    const translations: Record<string, string> = {
-      'repair': 'Ремонт',
-      'diagnostics': 'Диагностика',
-      'installation': 'Установка',
-      'mounting': 'Монтаж',
-      'maintenance': 'Обслуживание',
-      'consultation': 'Консультация',
-      'inspection': 'Осмотр'
-    };
-    return translations[workType.toLowerCase()] || workType;
-  };
 
   // Filter active tasks (not completed or cancelled)
   const activeTasks = tasks?.filter(t => t.status !== 'completed' && t.status !== 'cancelled') || [];
