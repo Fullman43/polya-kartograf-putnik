@@ -31,6 +31,11 @@ import { useUploadTaskPhoto } from "@/hooks/useTaskPhotos";
 import { Input } from "@/components/ui/input";
 import { TelegramSettings } from "@/components/employee/TelegramSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { PullToRefresh } from "@/components/PullToRefresh";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { Bell, BellOff } from "lucide-react";
 
 const Employee = () => {
   const navigate = useNavigate();
@@ -43,6 +48,7 @@ const Employee = () => {
   const queryClient = useQueryClient();
   const createComment = useCreateComment();
   const uploadPhoto = useUploadTaskPhoto();
+  const { permission, requestPermission, subscription } = usePushNotifications();
   
   const [comments, setComments] = useState<Record<string, string>>({});
   const [watchId, setWatchId] = useState<number | null>(null);
@@ -293,6 +299,24 @@ const Employee = () => {
     });
   };
 
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+    ]);
+  };
+
+  const handleToggleNotifications = async () => {
+    if (permission === 'granted') {
+      toast({
+        title: 'Уведомления включены',
+        description: 'Push-уведомления уже активированы',
+      });
+    } else {
+      await requestPermission();
+    }
+  };
+
   const getStatusBadge = (status: "available" | "busy" | "offline") => {
     const statusConfig = {
       available: { label: "Доступен", variant: "default" as const, className: "bg-success hover:bg-success" },
@@ -304,75 +328,103 @@ const Employee = () => {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* Header */}
-      <header className="bg-card border-b sticky top-0 z-10 shadow-card">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold">Мои задачи</h1>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
-            </div>
-            <div className="flex items-center gap-3">
-              {/* GPS Status */}
-              <div className="flex items-center gap-2 text-xs">
-                {gpsStatus === "active" && (
-                  <>
-                    <span className="h-2 w-2 bg-success rounded-full animate-pulse" />
-                    <span className="text-muted-foreground">GPS активен</span>
-                  </>
-                )}
-                {gpsStatus === "unavailable" && (
-                  <>
-                    <span className="h-2 w-2 bg-destructive rounded-full" />
-                    <span className="text-muted-foreground">GPS недоступен</span>
-                  </>
-                )}
-                {gpsStatus === "loading" && (
-                  <>
-                    <span className="h-2 w-2 bg-warning rounded-full animate-pulse" />
-                    <span className="text-muted-foreground">Определение...</span>
-                  </>
-                )}
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="min-h-screen bg-muted/30">
+        {/* Offline Indicator */}
+        <OfflineIndicator />
+        
+        {/* PWA Install Banner */}
+        <PWAInstallBanner />
+        
+        {/* Header */}
+        <header className="bg-card border-b sticky top-0 z-10 shadow-card">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl font-bold">Мои задачи</h1>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
               </div>
-              
-              {currentEmployee && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant={getStatusBadge(currentEmployee.status).variant}
-                      size="sm"
-                      className={`gap-1 ${getStatusBadge(currentEmployee.status).className}`}
-                    >
-                      {getStatusBadge(currentEmployee.status).label}
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleEmployeeStatusChange("available")}>
-                      🟢 Доступен
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEmployeeStatusChange("busy")}>
-                      🟡 Занят
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEmployeeStatusChange("offline")}>
-                      ⚫ Оффлайн
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={signOut}
-                title="Выход"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* GPS Status */}
+                <div className="flex items-center gap-2 text-xs">
+                  {gpsStatus === "active" && (
+                    <>
+                      <span className="h-2 w-2 bg-success rounded-full animate-pulse" />
+                      <span className="text-muted-foreground hidden sm:inline">GPS активен</span>
+                    </>
+                  )}
+                  {gpsStatus === "unavailable" && (
+                    <>
+                      <span className="h-2 w-2 bg-destructive rounded-full" />
+                      <span className="text-muted-foreground hidden sm:inline">GPS недоступен</span>
+                    </>
+                  )}
+                  {gpsStatus === "loading" && (
+                    <>
+                      <span className="h-2 w-2 bg-warning rounded-full animate-pulse" />
+                      <span className="text-muted-foreground hidden sm:inline">Определение...</span>
+                    </>
+                  )}
+                </div>
+                
+                {/* Push Notifications Toggle */}
+                <Button
+                  variant={permission === 'granted' ? 'ghost' : 'outline'}
+                  size="icon"
+                  onClick={handleToggleNotifications}
+                  title={permission === 'granted' ? 'Уведомления включены' : 'Включить уведомления'}
+                  className="h-8 w-8"
+                >
+                  {permission === 'granted' ? (
+                    <Bell className="h-4 w-4 text-primary" />
+                  ) : (
+                    <BellOff className="h-4 w-4" />
+                  )}
+                </Button>
+                
+                {currentEmployee && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button 
+                        variant={getStatusBadge(currentEmployee.status).variant}
+                        size="sm"
+                        className={`gap-1 ${getStatusBadge(currentEmployee.status).className}`}
+                      >
+                        <span className="hidden sm:inline">{getStatusBadge(currentEmployee.status).label}</span>
+                        <span className="sm:hidden">
+                          {currentEmployee.status === 'available' && '🟢'}
+                          {currentEmployee.status === 'busy' && '🟡'}
+                          {currentEmployee.status === 'offline' && '⚫'}
+                        </span>
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEmployeeStatusChange("available")}>
+                        🟢 Доступен
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEmployeeStatusChange("busy")}>
+                        🟡 Занят
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEmployeeStatusChange("offline")}>
+                        ⚫ Оффлайн
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={signOut}
+                  title="Выход"
+                  className="h-8 w-8"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -648,6 +700,7 @@ const Employee = () => {
         </Tabs>
       </main>
     </div>
+    </PullToRefresh>
   );
 };
 

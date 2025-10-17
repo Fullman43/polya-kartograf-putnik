@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      device_tokens: {
+        Row: {
+          auth: string
+          created_at: string
+          device_id: string
+          endpoint: string
+          id: string
+          last_used_at: string
+          p256dh: string
+          platform: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          device_id: string
+          endpoint: string
+          id?: string
+          last_used_at?: string
+          p256dh: string
+          platform: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          device_id?: string
+          endpoint?: string
+          id?: string
+          last_used_at?: string
+          p256dh?: string
+          platform?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       employees: {
         Row: {
           created_at: string
