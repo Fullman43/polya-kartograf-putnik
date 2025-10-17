@@ -130,9 +130,9 @@ export function parsePointToCoordinates(point: string | null): RoutePoint | null
     // Remove "POINT" prefix if exists and extract coordinates
     const coordsMatch = point.match(/[\(\s]([-\d.]+)[,\s]+([-\d.]+)[\)]/);
     if (coordsMatch) {
-      // First value is latitude, second is longitude (as saved from Telegram)
-      const lat = parseFloat(coordsMatch[1]);
-      const lng = parseFloat(coordsMatch[2]);
+      // PostgreSQL Point format is (x, y) = (longitude, latitude)
+      const lng = parseFloat(coordsMatch[1]);
+      const lat = parseFloat(coordsMatch[2]);
       return { lat, lng };
     }
     return null;
@@ -144,8 +144,8 @@ export function parsePointToCoordinates(point: string | null): RoutePoint | null
 
 /**
  * Format coordinates to PostgreSQL Point format
- * Saves in format: (latitude, longitude) to match Telegram format
+ * PostgreSQL Point format is (x, y) = (longitude, latitude)
  */
 export function formatToPostGISPoint(lat: number, lng: number): string {
-  return `(${lat},${lng})`;
+  return `(${lng},${lat})`;
 }
